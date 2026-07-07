@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HarvestLink AI - Smart Agriculture Connection Platform</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="HarvestLink AI bridges the gap between farmers and buyers. Track crop inventory, view market analytics, manage buyer enquiries, and get AI-powered recommendations using Gemini.">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- App Layout -->
+  <div id="app-layout">
+    
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Sidebar Menu -->
+    <aside id="sidebar">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i class="fa-solid fa-wheat-awn"></i>
+        </div>
+        <span class="logo-text">HarvestLink AI</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li class="nav-item active" id="nav-dashboard">
+            <button onclick="app.switchTab('dashboard')">
+              <i class="fa-solid fa-chart-pie"></i>
+              <span>Dashboard</span>
+            </button>
+          </li>
+          <li class="nav-item" id="nav-listings">
+            <button onclick="app.switchTab('listings')">
+              <i class="fa-solid fa-boxes-stacked"></i>
+              <span>My Listings</span>
+            </button>
+          </li>
+          <li class="nav-item" id="nav-marketplace">
+            <button onclick="app.switchTab('marketplace')">
+              <i class="fa-solid fa-store"></i>
+              <span>Marketplace</span>
+            </button>
+          </li>
+          <li class="nav-item" id="nav-ai-advisor">
+            <button onclick="app.switchTab('ai-advisor')">
+              <i class="fa-solid fa-brain"></i>
+              <span>AI Advisor</span>
+            </button>
+          </li>
+          <li class="nav-item" id="nav-profile">
+            <button onclick="app.switchTab('profile')">
+              <i class="fa-solid fa-gears"></i>
+              <span>Profile & Settings</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge" id="sidebar-profile-card">
+          <div class="avatar" id="sidebar-avatar">RP</div>
+          <div class="user-info">
+            <span class="user-name" id="sidebar-username">Ramesh Patel</span>
+            <span class="user-role" id="sidebar-role">Farmer</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-container">
+      
+      <!-- Topbar Header -->
+      <header id="top-header">
+        <div class="header-title-section">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" onclick="app.toggleSidebar()">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div style="margin-left: 10px; display: inline-block; vertical-align: middle;">
+            <h1 id="screen-title">Dashboard</h1>
+            <p id="screen-subtitle">Welcome back, Ramesh Patel! Here is your farming summary.</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- API Status Pill -->
+          <div class="api-status-pill demo" id="api-status-pill" onclick="app.openApiKeyModal()" title="Click to configure Gemini API Key">
+            <i class="fa-solid fa-robot"></i>
+            <span id="api-status-text">Demo Mode</span>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button class="theme-toggle-btn" onclick="app.toggleDarkMode()" title="Toggle Dark/Light Mode">
+            <i class="fa-solid fa-moon" id="theme-toggle-icon"></i>
+          </button>
+
+          <!-- Current Role Swapper -->
+          <div class="role-switch-container">
+            <button class="role-btn active" id="role-btn-farmer" onclick="app.toggleRole('Farmer')">
+              <i class="fa-solid fa-tractor"></i> Farmer
+            </button>
+            <button class="role-btn" id="role-btn-buyer" onclick="app.toggleRole('Buyer')">
+              <i class="fa-solid fa-basket-shopping"></i> Buyer
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ============================================== -->
+      <!-- TAB CONTENT: Dashboard Screen -->
+      <!-- ============================================== -->
+      <section class="app-screen active" id="screen-dashboard">
+        
+        <!-- Metrics Cards -->
+        <div class="metrics-grid">
+          <div class="kpi-card kpi-primary">
+            <div class="kpi-icon"><i class="fa-solid fa-seedling"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Active Listings</span>
+              <span class="kpi-value" id="kpi-active-listings">3 Crops</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-accent">
+            <div class="kpi-icon"><i class="fa-solid fa-comments"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Enquiries Received</span>
+              <span class="kpi-value" id="kpi-enquiries">3 Pending</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Sales Value (Est.)</span>
+              <span class="kpi-value" id="kpi-sales">Rs. 8,68,000</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-info">
+            <div class="kpi-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Total Inventory</span>
+              <span class="kpi-value" id="kpi-inventory">14,200 kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts and Side Activity Feed -->
+        <div class="dashboard-grid">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-chart-line"></i> Market price trends (Rs. per Unit)</h3>
+              <select class="select-clean" id="dashboard-chart-crop-select" onchange="app.updateDashboardChart()">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="chart-container">
+              <canvas id="trendsChart"></canvas>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-bell"></i> Farm Alerts & Recommendations</h3>
+            </div>
+            <ul class="activity-list" id="dashboard-alerts">
+              <!-- Rendered dynamically -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Recent Listings Table -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3 class="panel-title"><i class="fa-solid fa-list"></i> My Current Listings Overview</h3>
+            <button class="btn btn-secondary btn-sm" onclick="app.switchTab('listings')">View All</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Crop Name</th>
+                  <th>Category</th>
+                  <th>Quantity</th>
+                  <th>Target Price</th>
+                  <th>Harvest Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-listings-table">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB CONTENT: My Listings Screen (Farmer View) -->
+      <!-- ============================================== -->
+      <section class="app-screen" id="screen-listings">
+        <div class="section-actions">
+          <div class="search-filter-group">
+            <div class="input-icon-group">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="listings-search" placeholder="Search my listings..." oninput="app.filterMyListings()">
+            </div>
+            <select class="select-clean" id="listings-category" onchange="app.filterMyListings()">
+              <option value="all">All Categories</option>
+              <option value="Grains">Grains</option>
+              <option value="Vegetables">Vegetables</option>
+              <option value="Fruits">Fruits</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="app.openAddListingModal()">
+            <i class="fa-solid fa-circle-plus"></i> Add Crop Listing
+          </button>
+        </div>
+
+        <div class="listings-grid" id="my-listings-grid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Inquiries received panel -->
+        <div class="panel-card" style="margin-top: 32px;">
+          <div class="panel-header">
+            <h3 class="panel-title"><i class="fa-solid fa-comments"></i> Buyer Enquiries Received</h3>
+            <span class="badge badge-info" id="received-enquiries-count">0 New</span>
+          </div>
+          <div id="received-enquiries-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB CONTENT: Marketplace Screen (Buyer View) -->
+      <!-- ============================================== -->
+      <section class="app-screen" id="screen-marketplace">
+        <div class="section-actions">
+          <div class="search-filter-group">
+            <div class="input-icon-group">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="market-search" placeholder="Search crop names, variety, location..." oninput="app.filterMarketplace()">
+            </div>
+            <select class="select-clean" id="market-category" onchange="app.filterMarketplace()">
+              <option value="all">All Categories</option>
+              <option value="Grains">Grains</option>
+              <option value="Vegetables">Vegetables</option>
+              <option value="Fruits">Fruits</option>
+              <option value="Others">Others</option>
+            </select>
+            <select class="select-clean" id="market-status" onchange="app.filterMarketplace()">
+              <option value="all">All Statuses</option>
+              <option value="Available">Available</option>
+              <option value="Reserved">Reserved</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="listings-grid" id="marketplace-grid">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB CONTENT: AI Advisor Screen -->
+      <!-- ============================================== -->
+      <section class="app-screen" id="screen-ai-advisor">
+        <div class="ai-advisor-layout">
+          
+          <!-- Left Panel: Smart Selling Planner -->
+          <div class="panel-card advisor-left-panel">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-chart-pie"></i> Smart Selling Recommendations</h3>
+            </div>
+            <div class="crop-selector-card">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="advisor-crop-select">Select Your Listed Crop</label>
+                <select class="select-clean" id="advisor-crop-select" style="width: 100%;" onchange="app.resetAdvisorInsight()">
+                  <!-- Dynamically populated with user's crops -->
+                </select>
+              </div>
+              <button class="btn btn-accent btn-block" id="advisor-generate-btn" onclick="app.generateAdvisorRecommendation()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Market Recommendation
+              </button>
+            </div>
+            <div class="advisor-insights-container" id="advisor-insights-container">
+              <div class="empty-state" id="advisor-insights-empty">
+                <i class="fa-solid fa-chart-line"></i>
+                <p>Select a crop listing and click the button to generate personalized selling target advice and market window forecasts.</p>
+              </div>
+              <div class="ai-recommendation-result" id="advisor-insights-result" style="display: none;">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: Agriculture Advisor Chat -->
+          <div class="panel-card advisor-right-panel">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-robot"></i> HarvestLink AI Farming Q&A</h3>
+              <button class="btn btn-secondary btn-sm" onclick="app.clearChatHistory()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+            </div>
+            <div class="chat-messages-container" id="chat-messages-container">
+              <!-- Chat logs render dynamically -->
+            </div>
+            <div class="chat-input-bar">
+              <input type="text" id="chat-input" placeholder="Ask about pests, irrigation, weather crop preparation, market trends..." onkeydown="if(event.key === 'Enter') app.sendChatMessage()">
+              <button class="btn btn-primary btn-icon-only" onclick="app.sendChatMessage()" id="chat-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB CONTENT: Profile & Settings Screen -->
+      <!-- ============================================== -->
+      <section class="app-screen" id="screen-profile">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3 class="panel-title"><i class="fa-solid fa-user-gear"></i> Farmer Profile Management</h3>
+          </div>
+          
+          <div class="profile-card">
+            <!-- Left Avatar panel -->
+            <div class="profile-avatar-sec">
+              <div class="profile-avatar-large" id="profile-avatar-large">RP</div>
+              <h3 id="profile-display-name">Ramesh Patel</h3>
+              <p class="user-role">Verified HarvestLink Farmer</p>
+            </div>
+
+            <!-- Right Profile details form -->
+            <div class="settings-sec">
+              <form id="profile-form" onsubmit="app.saveProfile(event)">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="profile-name">Full Name</label>
+                    <input type="text" id="profile-name" required value="Ramesh Patel">
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-farm-name">Farm Name</label>
+                    <input type="text" id="profile-farm-name" required value="Green Valley Farm">
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-location">Location (District, State)</label>
+                    <input type="text" id="profile-location" required value="Nashik, Maharashtra">
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-farm-size">Total Farm Size</label>
+                    <input type="text" id="profile-farm-size" value="12 Acres">
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-phone">Contact Phone</label>
+                    <input type="text" id="profile-phone" required value="+91 98765 43210">
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-email">Email Address</label>
+                    <input type="email" id="profile-email" required value="ramesh.patel@greenvalley.com">
+                  </div>
+                  <div class="form-group col-span-2">
+                    <label for="profile-crops">Main Harvest Crops</label>
+                    <input type="text" id="profile-crops" value="Wheat, Tomatoes, Onion">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Profile Info</button>
+              </form>
+
+              <div class="settings-divider"></div>
+
+              <!-- Gemini Settings -->
+              <div class="api-key-container">
+                <div class="api-key-header">
+                  <i class="fa-solid fa-key" style="color: var(--color-accent)"></i>
+                  <span>Gemini API Key configuration</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--color-text-medium); margin-bottom: 12px;">
+                  Configure a custom Google Gemini API Key to enable real-time live crop description generating and marketplace pricing predictions. Without an API Key, HarvestLink operates in a detailed <strong>Demo mode</strong> using pre-scripted simulations.
+                </p>
+                <div class="api-key-input-row">
+                  <input type="password" id="settings-api-key" placeholder="AIzaSy..." style="flex-grow: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                  <button class="btn btn-primary" onclick="app.saveApiKeyFromSettings()">Save Key</button>
+                  <button class="btn btn-secondary" onclick="app.clearApiKeyFromSettings()">Clear</button>
+                </div>
+                <p id="api-key-success-msg" style="font-size: 0.8rem; color: var(--color-success); margin-top: 8px; font-weight: 600; display: none;">
+                  API key successfully saved! Live mode active.
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL OVERLAY: Add/Edit Crop Listing -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="add-listing-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="listing-modal-title">Add Crop Inventory</h3>
+        <button class="modal-close-btn" onclick="app.closeAddListingModal()">&times;</button>
+      </div>
+      <form id="listing-form" onsubmit="app.saveListing(event)">
+        <input type="hidden" id="listing-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label for="listing-crop-name">Crop Name (e.g. Basmati Rice, Red Onions)</label>
+              <input type="text" id="listing-crop-name" required placeholder="Wheat variety sharbati">
+            </div>
+            
+            <div class="form-group">
+              <label for="listing-category">Category</label>
+              <select id="listing-category" required>
+                <option value="Grains">Grains</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="listing-variety">Variety / Type</label>
+              <input type="text" id="listing-variety" placeholder="e.g. Sharbati, Hybrid">
+            </div>
+
+            <div class="form-group">
+              <label for="listing-quantity">Quantity Available</label>
+              <input type="number" id="listing-quantity" required min="1" placeholder="5000">
+            </div>
+            <div class="form-group">
+              <label for="listing-unit">Unit</label>
+              <select id="listing-unit" required>
+                <option value="kg">kg (Kilogram)</option>
+                <option value="quintals">quintals</option>
+                <option value="tons">tons</option>
+                <option value="crates">crates</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="listing-price">Expected Price (Rs. per Unit)</label>
+              <input type="number" id="listing-price" required min="1" placeholder="30">
+            </div>
+            <div class="form-group">
+              <label for="listing-harvest-date">Harvest Date</label>
+              <input type="date" id="listing-harvest-date" required>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label for="listing-location">Farm Location for Pickup</label>
+              <input type="text" id="listing-location" required placeholder="Nashik, MH">
+            </div>
+
+            <div class="form-group col-span-2">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="listing-description">Crop Description</label>
+                <button type="button" class="btn btn-accent btn-sm ai-generator-field-btn" id="listing-ai-desc-btn" onclick="app.generateListingDescription()">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Description
+                </button>
+              </div>
+              <textarea id="listing-description" placeholder="Describe quality, storage details..." required></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeAddListingModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="listing-save-btn">Publish Listing</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL OVERLAY: Send Buyer Enquiry -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="enquiry-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Contact Seller / Submit Enquiry</h3>
+        <button class="modal-close-btn" onclick="app.closeEnquiryModal()">&times;</button>
+      </div>
+      <form id="enquiry-form" onsubmit="app.saveEnquiry(event)">
+        <input type="hidden" id="enquiry-listing-id">
+        <div class="modal-body">
+          <div style="background-color: var(--color-primary-ultra-light); padding: 12px 16px; border-radius: var(--border-radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+            <i class="fa-solid fa-leaf" style="color: var(--color-primary-medium); font-size: 1.5rem;"></i>
+            <div>
+              <h4 id="enquiry-crop-title" style="font-weight: 700;">Crop Name</h4>
+              <p id="enquiry-crop-meta" style="font-size: 0.8rem; color: var(--color-text-medium);">Seller: Ramesh Patel | Rate: Rs. 30/kg</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label for="enquiry-buyer-name">Your Full Name (or Company)</label>
+              <input type="text" id="enquiry-buyer-name" required value="Sourcing Officer (BigBasket)">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-buyer-phone">Phone Number</label>
+              <input type="text" id="enquiry-buyer-phone" required value="+91 98877 66554">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-buyer-email">Email Address</label>
+              <input type="email" id="enquiry-buyer-email" required value="sourcing@bigbasket.in">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-quantity">Quantity Requested</label>
+              <input type="number" id="enquiry-quantity" required min="1">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-price">Proposed Buying Price (Rs. per Unit)</label>
+              <input type="number" id="enquiry-price" required min="1">
+            </div>
+            <div class="form-group col-span-2">
+              <label for="enquiry-message">Detailed Enquiry Message</label>
+              <textarea id="enquiry-message" required placeholder="Detail delivery/transport requirements or pickup arrangements..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeEnquiryModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Offer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL OVERLAY: Configure API Key (Topbar Shortcut) -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="api-modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>AI API Key Setup</h3>
+        <button class="modal-close-btn" onclick="app.closeApiKeyModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="background-color: var(--color-accent-light); color: var(--color-accent); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 12px auto;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <h4 style="font-weight: 700; margin-bottom: 6px;">Unlock Live Gemini Recommendations</h4>
+          <p style="font-size: 0.85rem; color: var(--color-text-medium);">
+            HarvestLink uses the <strong>Gemini 1.5 Flash</strong> model directly in your browser. Enter your API key below.
+          </p>
+        </div>
+        <div class="form-group">
+          <label for="modal-api-key">Google Gemini API Key</label>
+          <input type="password" id="modal-api-key" placeholder="Paste your API key here (AIzaSy...)">
+        </div>
+        <p style="font-size: 0.75rem; color: var(--color-text-light); text-align: center;">
+          Your API key is saved locally in your browser's <code>localStorage</code> and is sent directly to Google APIs.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeApiKeyModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveApiKeyFromModal()">Activate Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Seed & Service Scripts -->
+  <script src="mockData.js"></script>
+  <script src="gemini.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
