@@ -698,36 +698,63 @@ class HarvestLinkApp {
 
     relevant.reverse().forEach(e => {
       let statusBadge = "";
-      if (e.status === "Pending") statusBadge = `<span class="badge badge-warning">Pending</span>`;
-      else if (e.status === "Accepted") statusBadge = `<span class="badge badge-success">Accepted</span>`;
-      else statusBadge = `<span class="badge badge-danger">Rejected</span>`;
+      if (e.status === "Pending") statusBadge = `<span class="badge proposal-badge-pending">Pending</span>`;
+      else if (e.status === "Accepted") statusBadge = `<span class="badge proposal-badge-accepted">Accepted</span>`;
+      else statusBadge = `<span class="badge proposal-badge-rejected">Rejected</span>`;
 
       // Get crop details
       const crop = this.listings.find(c => c.id === e.listingId) || { unit: "kg" };
 
       const enqCard = document.createElement("div");
-      enqCard.className = "enquiry-card";
+      enqCard.className = "enquiry-proposal-card";
       enqCard.innerHTML = `
-        <div class="enquiry-header">
-          <div class="enquiry-meta">
-            <span class="enquiry-crop-tag">${e.cropName}</span>
-            <h4 class="enquiry-buyer-name">${e.buyerName}</h4>
-            <span class="enquiry-date">Received: ${new Date(e.createdAt).toLocaleDateString()}</span>
+        <div class="enquiry-proposal-header">
+          <div>
+            <h4 class="enquiry-proposal-title"><i class="fa-solid fa-wheat-awn"></i> Crop Offer: ${e.cropName}</h4>
+            <span class="enquiry-proposal-date">Submitted on: ${new Date(e.createdAt).toLocaleDateString()}</span>
           </div>
           ${statusBadge}
         </div>
-        <p class="enquiry-body">"${e.message}"</p>
-        <div class="enquiry-deal-details">
-          <div class="enquiry-deal-item">Quantity Proposed: <span>${e.quantityRequested.toLocaleString()} ${crop.unit}</span></div>
-          <div class="enquiry-deal-item">Price Offered: <span>Rs. ${e.priceOffered}/${crop.unit}</span></div>
-          <div class="enquiry-deal-item">Contact: <span>${e.buyerPhone} / ${e.buyerEmail}</span></div>
-        </div>
-        ${e.status === "Pending" ? `
-          <div class="enquiry-actions">
-            <button class="btn btn-secondary btn-sm" onclick="app.updateEnquiryStatus('${e.id}', 'Rejected')"><i class="fa-solid fa-xmark"></i> Reject Offer</button>
-            <button class="btn btn-primary btn-sm" onclick="app.updateEnquiryStatus('${e.id}', 'Accepted')"><i class="fa-solid fa-check"></i> Accept Offer</button>
+        
+        <div class="proposal-grid">
+          <!-- Buyer Information Section -->
+          <div>
+            <h5 class="proposal-sec-title"><i class="fa-solid fa-tractor"></i> Buyer Information</h5>
+            <ul class="proposal-details-list">
+              <li>Company: <strong>${e.buyerCompany || "Not Specified"}</strong></li>
+              <li>Contact Person: <strong>${e.buyerName}</strong></li>
+              <li>Phone: <strong>${e.buyerPhone}</strong></li>
+              <li>Email: <strong>${e.buyerEmail}</strong></li>
+            </ul>
           </div>
-        ` : ""}
+          
+          <!-- Offer Details Section -->
+          <div>
+            <h5 class="proposal-sec-title"><i class="fa-solid fa-handshake"></i> Offer Details</h5>
+            <ul class="proposal-details-list">
+              <li>Quantity Requested: <strong>${e.quantityRequested.toLocaleString()} ${crop.unit}</strong></li>
+              <li>Offered Price: <strong>Rs. ${e.priceOffered}/${crop.unit}</strong></li>
+              <li>Expected Delivery: <strong>${e.expectedDeliveryDate || "Not Specified"}</strong></li>
+              <li>Payment Method: <strong>${e.preferredPayment || "Not Specified"}</strong></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Message Box -->
+        <div class="proposal-message-block">
+          <h5 class="proposal-sec-title"><i class="fa-solid fa-money-bill-wave"></i> Message from Buyer</h5>
+          <p class="proposal-message-box">"${e.message}"</p>
+        </div>
+        
+        <!-- Actions Row -->
+        <div class="proposal-actions-row">
+          ${e.status === "Pending" ? `
+            <button class="btn btn-proposal-accept btn-sm" onclick="app.updateEnquiryStatus('${e.id}', 'Accepted')"><i class="fa-solid fa-check"></i> Accept Offer</button>
+            <button class="btn btn-proposal-reject btn-sm" onclick="app.updateEnquiryStatus('${e.id}', 'Rejected')"><i class="fa-solid fa-xmark"></i> Reject Offer</button>
+            <button class="btn btn-proposal-counter btn-sm" onclick="app.makeCounterOffer('${e.id}')"><i class="fa-solid fa-coins"></i> Counter Offer</button>
+          ` : ""}
+          <button class="btn btn-secondary btn-sm" onclick="app.contactBuyer('${e.id}')"><i class="fa-solid fa-phone"></i> Contact Buyer</button>
+        </div>
       `;
       listContainer.appendChild(enqCard);
     });
@@ -750,6 +777,21 @@ class HarvestLinkApp {
 
     this.saveToStorage();
     this.renderMyListings();
+  }
+
+  makeCounterOffer(enqId) {
+    const enq = this.enquiries.find(e => e.id === enqId);
+    if (!enq) return;
+    const counterRate = prompt(`Enter your counter offer price per unit (Current Buyer Offer: Rs. ${enq.priceOffered}):`, enq.priceOffered);
+    if (counterRate !== null && !isNaN(counterRate) && Number(counterRate) > 0) {
+      alert(`Counter offer of Rs. ${counterRate}/unit sent to ${enq.buyerName} (${enq.buyerCompany})!`);
+    }
+  }
+
+  contactBuyer(enqId) {
+    const enq = this.enquiries.find(e => e.id === enqId);
+    if (!enq) return;
+    alert(`Contacting ${enq.buyerName} (${enq.buyerCompany}):\nPhone: ${enq.buyerPhone}\nEmail: ${enq.buyerEmail}`);
   }
 
   // --- MARKETPLACE SCREEN LOGIC ---
@@ -1019,14 +1061,22 @@ class HarvestLinkApp {
     document.getElementById("enquiry-price").value = crop.price;
     document.getElementById("enquiry-message").value = `We are interested in buying your ${crop.cropName}. Can you share your preferred pickup times?`;
 
+    // Defaults for new fields
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    document.getElementById("enquiry-delivery-date").value = nextWeek.toISOString().split('T')[0];
+    document.getElementById("enquiry-payment-method").value = "Bank Transfer";
+
     // Auto-fill buyer contact details from active profile if user is Buyer
     if (this.currentRole === "Buyer") {
       document.getElementById("enquiry-buyer-name").value = this.profile.name;
+      document.getElementById("enquiry-buyer-company").value = this.profile.farmName || "Green Valley Farm";
       document.getElementById("enquiry-buyer-phone").value = this.profile.phone;
       document.getElementById("enquiry-buyer-email").value = this.profile.email;
     } else {
       // Default placeholder buyer text
-      document.getElementById("enquiry-buyer-name").value = "Sourcing Officer (BigBasket)";
+      document.getElementById("enquiry-buyer-name").value = "Sourcing Officer";
+      document.getElementById("enquiry-buyer-company").value = "BigBasket Sourcing";
       document.getElementById("enquiry-buyer-phone").value = "+91 98877 66554";
       document.getElementById("enquiry-buyer-email").value = "sourcing@bigbasket.in";
     }
@@ -1044,10 +1094,13 @@ class HarvestLinkApp {
     event.preventDefault();
     const listingId = document.getElementById("enquiry-listing-id").value;
     const buyerName = document.getElementById("enquiry-buyer-name").value.trim();
+    const buyerCompany = document.getElementById("enquiry-buyer-company").value.trim();
     const buyerPhone = document.getElementById("enquiry-buyer-phone").value.trim();
     const buyerEmail = document.getElementById("enquiry-buyer-email").value.trim();
     const quantityRequested = Number(document.getElementById("enquiry-quantity").value);
     const priceOffered = Number(document.getElementById("enquiry-price").value);
+    const expectedDeliveryDate = document.getElementById("enquiry-delivery-date").value;
+    const preferredPayment = document.getElementById("enquiry-payment-method").value;
     const message = document.getElementById("enquiry-message").value.trim();
 
     const crop = this.listings.find(c => c.id === listingId);
@@ -1057,7 +1110,7 @@ class HarvestLinkApp {
       id: "enq-" + Date.now(),
       listingId,
       cropName: crop.cropName,
-      buyerName, buyerPhone, buyerEmail, quantityRequested, priceOffered, message,
+      buyerName, buyerCompany, buyerPhone, buyerEmail, quantityRequested, priceOffered, expectedDeliveryDate, preferredPayment, message,
       status: "Pending",
       createdAt: new Date().toISOString()
     };

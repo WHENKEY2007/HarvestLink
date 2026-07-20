@@ -575,37 +575,57 @@
         <input type="hidden" id="enquiry-listing-id">
         <div class="modal-body">
           <div style="background-color: var(--color-primary-ultra-light); padding: 12px 16px; border-radius: var(--border-radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-            <i class="fa-solid fa-leaf" style="color: var(--color-primary-medium); font-size: 1.5rem;"></i>
+            <i class="fa-solid fa-cart-shopping" style="color: var(--color-primary-medium); font-size: 1.5rem;"></i>
             <div>
               <h4 id="enquiry-crop-title" style="font-weight: 700;">Crop Name</h4>
               <p id="enquiry-crop-meta" style="font-size: 0.8rem; color: var(--color-text-medium);">Seller: Ramesh Patel | Rate: Rs. 30/kg</p>
             </div>
           </div>
           <div class="form-grid">
+            <div class="form-group">
+              <label for="enquiry-buyer-name"><i class="fa-solid fa-user"></i> Contact Person</label>
+              <input type="text" id="enquiry-buyer-name" required placeholder="e.g. Ramesh Patel">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-buyer-company"><i class="fa-solid fa-building"></i> Company Name</label>
+              <input type="text" id="enquiry-buyer-company" required placeholder="e.g. BigBasket Sourcing">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-buyer-phone"><i class="fa-solid fa-phone"></i> Phone Number</label>
+              <input type="text" id="enquiry-buyer-phone" required placeholder="+91 98877 66554">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-buyer-email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+              <input type="email" id="enquiry-buyer-email" required placeholder="buyer@company.com">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-quantity"><i class="fa-solid fa-scale-balanced"></i> Quantity Requested</label>
+              <input type="number" id="enquiry-quantity" required min="1" placeholder="1000">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-price"><i class="fa-solid fa-indian-rupee-sign"></i> Proposed Buying Price (Rs./Unit)</label>
+              <input type="number" id="enquiry-price" required min="1" placeholder="30">
+            </div>
+            <div class="form-group">
+              <label for="enquiry-delivery-date"><i class="fa-solid fa-calendar-day"></i> Expected Delivery Date</label>
+              <input type="date" id="enquiry-delivery-date" required>
+            </div>
+            <div class="form-group">
+              <label for="enquiry-payment-method"><i class="fa-solid fa-credit-card"></i> Preferred Payment Method</label>
+              <select id="enquiry-payment-method" required>
+                <option value="UPI">UPI</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cash on Delivery">Cash on Delivery</option>
+              </select>
+            </div>
             <div class="form-group col-span-2">
-              <label for="enquiry-buyer-name">Your Full Name (or Company)</label>
-              <input type="text" id="enquiry-buyer-name" required value="Sourcing Officer (BigBasket)">
-            </div>
-            <div class="form-group">
-              <label for="enquiry-buyer-phone">Phone Number</label>
-              <input type="text" id="enquiry-buyer-phone" required value="+91 98877 66554">
-            </div>
-            <div class="form-group">
-              <label for="enquiry-buyer-email">Email Address</label>
-              <input type="email" id="enquiry-buyer-email" required value="sourcing@bigbasket.in">
-            </div>
-            <div class="form-group">
-              <label for="enquiry-quantity">Quantity Requested</label>
-              <input type="number" id="enquiry-quantity" required min="1">
-            </div>
-            <div class="form-group">
-              <label for="enquiry-price">Proposed Buying Price (Rs. per Unit)</label>
-              <input type="number" id="enquiry-price" required min="1">
-            </div>
-            <div class="form-group col-span-2">
-              <label for="enquiry-message">Detailed Enquiry Message</label>
+              <label for="enquiry-message"><i class="fa-solid fa-clipboard-list"></i> Detailed Enquiry Message</label>
               <textarea id="enquiry-message" required placeholder="Detail delivery/transport requirements or pickup arrangements..."></textarea>
             </div>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--color-text-medium); margin-top: 15px; display: flex; align-items: center; gap: 8px; background-color: var(--color-primary-ultra-light); padding: 8px 12px; border-radius: var(--border-radius-sm);">
+            <i class="fa-solid fa-paper-plane" style="color: var(--color-primary-medium);"></i>
+            <span>Your enquiry will be sent directly to the farmer.</span>
           </div>
         </div>
         <div class="modal-footer">
