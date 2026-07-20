@@ -273,6 +273,8 @@ const firebaseConfig = {
         return "Network connection error. Please check your internet connection.";
       case "auth/operation-not-allowed":
         return "Google authentication is not enabled in Firebase Console. Please enable it in Authentication → Sign-in method.";
+      case "auth/configuration-not-found":
+        return "Google Sign-In configuration was not found. Please ensure that Google Sign-In is enabled in the Firebase Console (Authentication → Sign-in method).";
       case "auth/quota-exceeded":
         return "Firebase authentication quota exceeded. Please try again later.";
       case "auth/user-disabled":
