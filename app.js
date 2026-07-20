@@ -1,26 +1,7 @@
 class HarvestLinkApp {
   constructor() {
     this.currentUser = null;
-    this.auth = null;
     
-    // Config Firebase if globally available
-    if (typeof firebase !== 'undefined') {
-      const firebaseConfig = {
-        apiKey: "AIzaSyDummyKeyForHarvestLinkHackathon",
-        authDomain: "harvestlink-hackathon.firebaseapp.com",
-        projectId: "harvestlink-hackathon",
-        storageBucket: "harvestlink-hackathon.appspot.com",
-        messagingSenderId: "1234567890",
-        appId: "1:1234567890:web:abcdef123456"
-      };
-      try {
-        firebase.initializeApp(firebaseConfig);
-        this.auth = firebase.auth();
-      } catch (err) {
-        console.warn("Firebase App initialize error or already exists:", err);
-      }
-    }
-
     // Set fallback onGeminiFallback to handle live modes
     window.onGeminiFallback = (errMsg) => {
       window.GeminiService.setApiKey(""); // clear key to fall back to demo mode
@@ -35,7 +16,7 @@ class HarvestLinkApp {
     // Initialize UI on page load
     document.addEventListener("DOMContentLoaded", () => {
       this.initUI();
-      this.setupAuthListener();
+      this.setupAuthService();
     });
   }
 
@@ -96,34 +77,138 @@ class HarvestLinkApp {
     }
   }
 
-  setupAuthListener() {
-    if (this.auth) {
-      this.auth.onAuthStateChanged(user => {
-        if (user) {
-          this.currentUser = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || "Google User",
-            photoURL: user.photoURL || ""
-          };
-          localStorage.setItem("harvestlink_current_user", JSON.stringify(this.currentUser));
-          this.initUserProfiles();
-          this.hideLoginScreen();
-        } else {
-          this.currentUser = null;
-          localStorage.removeItem("harvestlink_current_user");
-          this.showLoginScreen();
-        }
+  setupAuthService() {
+    // 1. Diagnostics Console Renderer
+    const runDiagnosticsUI = () => {
+      const list = document.getElementById("diagnostics-list");
+      if (!list) return;
+      list.innerHTML = "";
+
+      const checks = [
+        { key: "sdkLoaded", label: "Firebase SDK Loaded" },
+        { key: "initialized", label: "Firebase Initialized" },
+        { key: "authInitialized", label: "Authentication Initialized" },
+        { key: "providerCreated", label: "Google Provider Created" },
+        { key: "httpProtocol", label: "Running over HTTP/HTTPS" },
+        { key: "popupSupported", label: "Browser Supports Popup" },
+        { key: "authorizedDomain", label: "Authorized Domain" },
+        { key: "internetConnection", label: "Internet Connection" }
+      ];
+
+      const diag = window.HarvestLinkAuth.diagnostics;
+      checks.forEach(check => {
+        const val = diag[check.key];
+        const li = document.createElement("li");
+        li.className = `diagnostics-item ${val ? 'success' : 'error'}`;
+        li.innerHTML = `
+          <span class="status-label">${check.label}</span>
+          <span class="status-icon"></span>
+        `;
+        list.appendChild(li);
       });
-    } else {
-      const savedUser = localStorage.getItem("harvestlink_current_user");
-      if (savedUser) {
-        this.currentUser = JSON.parse(savedUser);
+    };
+
+    // 2. State Change Handler
+    const onStateChanged = (user, err) => {
+      const btn = document.getElementById("btn-login-google");
+      const textSpan = document.getElementById("google-btn-text");
+      const warningBox = document.getElementById("login-warning-box");
+
+      if (btn) {
+        btn.disabled = !window.HarvestLinkAuth.diagnostics.internetConnection || !window.HarvestLinkAuth.diagnostics.httpProtocol;
+        if (textSpan) textSpan.innerText = "Sign in with Google";
+        const i = btn.querySelector("i");
+        if (i) i.className = "fa-brands fa-google";
+      }
+
+      if (err) {
+        console.error("Auth state error:", err);
+        this.showToast(err, "error");
+        if (warningBox) {
+          warningBox.innerText = err;
+          warningBox.style.display = "flex";
+        }
+      } else {
+        if (warningBox && window.HarvestLinkAuth.diagnostics.httpProtocol && window.HarvestLinkAuth.diagnostics.internetConnection) {
+          warningBox.style.display = "none";
+        }
+      }
+
+      if (user) {
+        this.currentUser = user;
+        localStorage.setItem("harvestlink_current_user", JSON.stringify(this.currentUser));
         this.initUserProfiles();
         this.hideLoginScreen();
       } else {
+        this.currentUser = null;
+        localStorage.removeItem("harvestlink_current_user");
         this.showLoginScreen();
       }
+
+      runDiagnosticsUI();
+    };
+
+    // 3. Connection Status Listener
+    const onNetworkChanged = (isOnline) => {
+      const btn = document.getElementById("btn-login-google");
+      const warningBox = document.getElementById("login-warning-box");
+
+      if (btn) {
+        btn.disabled = !isOnline || !window.HarvestLinkAuth.diagnostics.httpProtocol;
+      }
+
+      if (warningBox) {
+        if (!isOnline) {
+          warningBox.innerText = "Internet connection required for Google Authentication.";
+          warningBox.style.display = "flex";
+        } else if (!window.HarvestLinkAuth.diagnostics.httpProtocol) {
+          warningBox.innerText = "Google Authentication requires a web server. Launch the application using Live Server (http://localhost) or deploy it over HTTPS.";
+          warningBox.style.display = "flex";
+        } else if (!window.HarvestLinkAuth.diagnostics.initialized) {
+          warningBox.innerText = "Google Authentication is using demo configuration. Please replace the placeholder credentials in auth.js with your real Firebase config.";
+          warningBox.style.display = "flex";
+        } else {
+          warningBox.style.display = "none";
+        }
+      }
+
+      runDiagnosticsUI();
+    };
+
+    // Run Service Init
+    window.HarvestLinkAuth.init(onStateChanged, onNetworkChanged).then(() => {
+      runDiagnosticsUI();
+      
+      const warningBox = document.getElementById("login-warning-box");
+      const btn = document.getElementById("btn-login-google");
+
+      if (!window.HarvestLinkAuth.diagnostics.httpProtocol) {
+        if (warningBox) {
+          warningBox.innerText = "Google Authentication requires a web server. Launch the application using Live Server (http://localhost) or deploy it over HTTPS.";
+          warningBox.style.display = "flex";
+        }
+        if (btn) btn.disabled = true;
+      } else if (!window.HarvestLinkAuth.diagnostics.internetConnection) {
+        if (warningBox) {
+          warningBox.innerText = "Internet connection required for Google Authentication.";
+          warningBox.style.display = "flex";
+        }
+        if (btn) btn.disabled = true;
+      } else if (!window.HarvestLinkAuth.diagnostics.initialized) {
+        if (warningBox) {
+          warningBox.innerText = "Google Authentication is using demo configuration. Please replace the placeholder credentials in auth.js with your real Firebase config.";
+          warningBox.style.display = "flex";
+        }
+      }
+    });
+  }
+
+  toggleDiagnostics() {
+    const consoleEl = document.getElementById("diagnostics-console");
+    const bodyEl = document.getElementById("diagnostics-body");
+    if (consoleEl && bodyEl) {
+      const active = consoleEl.classList.toggle("active");
+      bodyEl.style.display = active ? "block" : "none";
     }
   }
 
@@ -155,11 +240,18 @@ class HarvestLinkApp {
   showLoginScreen() {
     const loginLayout = document.getElementById("login-layout");
     const appLayout = document.getElementById("app-layout");
-    if (loginLayout) loginLayout.style.display = "flex";
-    if (appLayout) appLayout.style.display = "none";
-    
     const loginCard = document.getElementById("login-card");
     const roleCard = document.getElementById("role-selection-card");
+
+    if (loginLayout) {
+      loginLayout.style.opacity = "0";
+      loginLayout.style.display = "flex";
+      setTimeout(() => {
+        loginLayout.style.transition = "opacity 0.4s ease";
+        loginLayout.style.opacity = "1";
+      }, 50);
+    }
+    if (appLayout) appLayout.style.display = "none";
     if (loginCard) loginCard.style.display = "block";
     if (roleCard) roleCard.style.display = "none";
   }
@@ -168,16 +260,39 @@ class HarvestLinkApp {
     const uid = this.currentUser.uid;
     const activeRole = localStorage.getItem(`harvestlink_active_role_${uid}`);
     
+    const loginLayout = document.getElementById("login-layout");
+    const appLayout = document.getElementById("app-layout");
+    const loginCard = document.getElementById("login-card");
+    const roleCard = document.getElementById("role-selection-card");
+
     if (!activeRole) {
-      const loginCard = document.getElementById("login-card");
-      const roleCard = document.getElementById("role-selection-card");
       if (loginCard) loginCard.style.display = "none";
-      if (roleCard) roleCard.style.display = "block";
+      if (roleCard) {
+        roleCard.style.opacity = "0";
+        roleCard.style.display = "block";
+        setTimeout(() => {
+          roleCard.style.transition = "opacity 0.4s ease";
+          roleCard.style.opacity = "1";
+        }, 50);
+      }
     } else {
-      const loginLayout = document.getElementById("login-layout");
-      const appLayout = document.getElementById("app-layout");
-      if (loginLayout) loginLayout.style.display = "none";
-      if (appLayout) appLayout.style.display = "flex";
+      if (loginLayout) {
+        loginLayout.style.transition = "opacity 0.4s ease";
+        loginLayout.style.opacity = "0";
+        setTimeout(() => {
+          loginLayout.style.display = "none";
+          if (appLayout) {
+            appLayout.style.opacity = "0";
+            appLayout.style.display = "flex";
+            setTimeout(() => {
+              appLayout.style.transition = "opacity 0.4s ease";
+              appLayout.style.opacity = "1";
+            }, 50);
+          }
+        }, 400);
+      } else {
+        if (appLayout) appLayout.style.display = "flex";
+      }
       this.toggleRole(activeRole);
     }
   }
@@ -189,29 +304,36 @@ class HarvestLinkApp {
   }
 
   loginWithGoogle() {
-    if (!this.auth) {
-      this.showToast("Firebase Authentication could not be loaded. Continuing in Demo Mode.", "info");
+    if (!window.HarvestLinkAuth || !window.HarvestLinkAuth.auth) {
+      if (window.HarvestLinkAuth && !window.HarvestLinkAuth.diagnostics.httpProtocol) {
+        this.showToast("Google Authentication requires a web server. Launching Demo Mode instead.", "info");
+      } else {
+        this.showToast("Google Authentication credentials are not configured. Launching Demo Mode instead.", "info");
+      }
       this.loginWithDemo();
       return;
     }
+
     const btn = document.getElementById("btn-login-google");
-    const originalText = btn ? btn.innerHTML : "";
+    const textSpan = document.getElementById("google-btn-text");
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Connecting...`;
+      if (textSpan) textSpan.innerText = "Signing in...";
+      const i = btn.querySelector("i");
+      if (i) i.className = "fa-solid fa-spinner spinner-icon";
     }
 
-    const provider = new firebase.auth.GoogleAuthProvider();
-    this.auth.signInWithPopup(provider)
-      .then((result) => {
+    window.HarvestLinkAuth.signInWithGoogle()
+      .then((user) => {
         this.showToast("Signed in successfully with Google!", "success");
       })
       .catch((error) => {
-        console.error("Google Sign-In Error:", error);
-        this.showToast(`Authentication failed: ${error.message}`, "error");
+        this.showToast(error.message, "error");
         if (btn) {
           btn.disabled = false;
-          btn.innerHTML = originalText || `<i class="fa-brands fa-google"></i> Sign in with Google`;
+          if (textSpan) textSpan.innerText = "Sign in with Google";
+          const i = btn.querySelector("i");
+          if (i) i.className = "fa-brands fa-google";
         }
       });
   }
@@ -231,10 +353,15 @@ class HarvestLinkApp {
 
   logout() {
     if (confirm("Are you sure you want to sign out?")) {
-      if (this.auth) {
-        this.auth.signOut().then(() => {
-          this.showToast("Logged out successfully.", "info");
-        });
+      if (window.HarvestLinkAuth && window.HarvestLinkAuth.auth) {
+        window.HarvestLinkAuth.signOut()
+          .then(() => {
+            this.showToast("Logged out successfully.", "info");
+          })
+          .catch((err) => {
+            console.error("Sign out error:", err);
+            this.showToast("Failed to log out cleanly.", "error");
+          });
       } else {
         this.currentUser = null;
         localStorage.removeItem("harvestlink_current_user");

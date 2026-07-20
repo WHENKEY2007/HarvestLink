@@ -1983,4 +1983,123 @@ body.dark-mode .proposal-message-box {
   animation: fa-spin 1s infinite linear;
 }
 
+/* Environmental / Offline Warning Box */
+.login-warning-box {
+  background-color: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: #842029;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+body.dark-mode .login-warning-box {
+  background-color: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  color: #f8d7da;
+}
+.login-warning-box::before {
+  content: "\f071";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #e63946;
+  font-size: 1rem;
+  margin-top: 1px;
+}
+
+/* System Diagnostics Console */
+.diagnostics-console {
+  margin-top: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.diagnostics-header {
+  padding: 10px 14px;
+  background-color: rgba(255, 255, 255, 0.05);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.diagnostics-header:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.diagnostics-header .toggle-icon {
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.diagnostics-console.active .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.diagnostics-body {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.diagnostics-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diagnostics-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.diagnostics-item .status-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diagnostics-item.success {
+  color: #a8dadc;
+}
+
+.diagnostics-item.success .status-icon::after {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #2ec4b6;
+}
+
+.diagnostics-item.error {
+  color: #f0a6a6;
+}
+
+.diagnostics-item.error .status-icon::after {
+  content: "\f00d";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #e63946;
+}
+
 

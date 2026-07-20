@@ -11,7 +11,7 @@
 ![HTML5](https://img.shields.io/badge/Structure-HTML5-orange?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/Styling-Vanilla%20CSS-blue?style=for-the-badge&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/Logic-Vanilla%20JS-yellow?style=for-the-badge&logo=javascript&logoColor=black)
-![Gemini AI](https://img.shields.io/badge/AI%20Engine-Gemini%201.5%20Flash-green?style=for-the-badge&logo=google-gemini&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/AI%20Engine-Gemini%202.5%20Flash-green?style=for-the-badge&logo=google-gemini&logoColor=white)
 ![Responsive](https://img.shields.io/badge/Design-Mobile%20Friendly-purple?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
 
@@ -66,7 +66,7 @@ The application is built with a dual operational engine:
 > [!IMPORTANT]
 > **Demo Mode (Default)**: Runs realistic, simulated AI copy generators, market reports, and chatbot replies locally. No configuration needed!
 >
-> **Live Mode**: Uses live requests to Google's **Gemini 1.5 Flash** models. To activate, navigate to **Profile & Settings** (or click the orange **Demo Mode** pill in the top header) and paste your **Google Gemini API Key**. The key is stored securely in your local browser storage.
+> **Live Mode**: Uses live requests to Google's **Gemini 2.5 Flash** models. To activate, navigate to **Profile & Settings** (or click the orange **Demo Mode** pill in the top header) and paste your **Google Gemini API Key**. The key is stored securely in your local browser storage.
 
 ---
 
