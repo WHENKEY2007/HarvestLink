@@ -1,4 +1,4 @@
-const INITIAL_PROFILE = {
+const INITIAL_FARMER_PROFILE = {
   name: "Ramesh Patel",
   location: "Nashik, Maharashtra",
   phone: "+91 98765 43210",
@@ -6,7 +6,18 @@ const INITIAL_PROFILE = {
   farmName: "Green Valley Farm",
   farmSize: "12 Acres",
   mainCrops: "Wheat, Tomatoes, Onion",
-  role: "Farmer" // 'Farmer' or 'Buyer'
+  role: "Farmer"
+};
+
+const INITIAL_BUYER_PROFILE = {
+  name: "Sourcing Officer",
+  location: "Mumbai, Maharashtra",
+  phone: "+91 98877 66554",
+  email: "sourcing@bigbasket.in",
+  farmName: "BigBasket Procurement",
+  farmSize: "",
+  mainCrops: "Fruits, Vegetables, Grains",
+  role: "Buyer"
 };
 
 const INITIAL_LISTINGS = [
@@ -166,7 +177,8 @@ const MARKET_TRENDS_SEED = {
 };
 
 window.HarvestLinkMockData = {
-  INITIAL_PROFILE,
+  INITIAL_FARMER_PROFILE,
+  INITIAL_BUYER_PROFILE,
   INITIAL_LISTINGS,
   INITIAL_ENQUIRIES,
   MARKET_TRENDS_SEED

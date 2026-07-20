@@ -71,6 +71,7 @@
           <div class="user-info">
             <span class="user-name" id="sidebar-username">Ramesh Patel</span>
             <span class="user-role" id="sidebar-role">Farmer</span>
+            <span class="user-company" id="sidebar-company" style="font-size: 0.75rem; opacity: 0.8; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">Green Valley Farm</span>
           </div>
         </div>
       </div>
@@ -406,7 +407,8 @@
       <section class="app-screen" id="screen-profile">
         <div class="panel-card">
           <div class="panel-header">
-            <h3 class="panel-title"><i class="fa-solid fa-user-gear"></i> Farmer Profile Management</h3>
+            <h3 class="panel-title farmer-only"><i class="fa-solid fa-user-gear"></i> Farmer Profile Management</h3>
+            <h3 class="panel-title buyer-only"><i class="fa-solid fa-user-gear"></i> Buyer Profile Management</h3>
           </div>
           
           <div class="profile-card">
@@ -414,26 +416,30 @@
             <div class="profile-avatar-sec">
               <div class="profile-avatar-large" id="profile-avatar-large">RP</div>
               <h3 id="profile-display-name">Ramesh Patel</h3>
-              <p class="user-role">Verified HarvestLink Farmer</p>
-            </div>
+              <p class="user-role farmer-only">Verified HarvestLink Farmer</p>
+              <p class="user-role buyer-only">Verified HarvestLink Buyer</p>
+            </div>Outfit
 
             <!-- Right Profile details form -->
             <div class="settings-sec">
               <form id="profile-form" onsubmit="app.saveProfile(event)">
                 <div class="form-grid">
                   <div class="form-group">
-                    <label for="profile-name">Full Name</label>
+                    <label for="profile-name" class="farmer-only">Full Name</label>
+                    <label for="profile-name" class="buyer-only">Contact Person</label>
                     <input type="text" id="profile-name" required value="Ramesh Patel">
                   </div>
                   <div class="form-group">
-                    <label for="profile-farm-name">Farm Name</label>
+                    <label for="profile-farm-name" class="farmer-only">Farm Name</label>
+                    <label for="profile-farm-name" class="buyer-only">Company Name</label>
                     <input type="text" id="profile-farm-name" required value="Green Valley Farm">
                   </div>
                   <div class="form-group">
-                    <label for="profile-location">Location (District, State)</label>
+                    <label for="profile-location" class="farmer-only">Location (District, State)</label>
+                    <label for="profile-location" class="buyer-only">HQ Location (City, State)</label>
                     <input type="text" id="profile-location" required value="Nashik, Maharashtra">
                   </div>
-                  <div class="form-group">
+                  <div class="form-group farmer-only">
                     <label for="profile-farm-size">Total Farm Size</label>
                     <input type="text" id="profile-farm-size" value="12 Acres">
                   </div>
@@ -446,7 +452,8 @@
                     <input type="email" id="profile-email" required value="ramesh.patel@greenvalley.com">
                   </div>
                   <div class="form-group col-span-2">
-                    <label for="profile-crops">Main Harvest Crops</label>
+                    <label for="profile-crops" class="farmer-only">Main Harvest Crops</label>
+                    <label for="profile-crops" class="buyer-only">Sourcing Categories</label>
                     <input type="text" id="profile-crops" value="Wheat, Tomatoes, Onion">
                   </div>
                 </div>

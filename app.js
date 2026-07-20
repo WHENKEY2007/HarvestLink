@@ -2,7 +2,6 @@ class HarvestLinkApp {
   constructor() {
     this.initStorage();
     this.currentTab = "dashboard";
-    this.currentRole = this.profile.role || "Farmer";
     this.chart = null;
     
     // Initial Chat log
@@ -20,9 +19,15 @@ class HarvestLinkApp {
   initStorage() {
     const seed = window.HarvestLinkMockData;
     
-    // Profile
-    const storedProfile = localStorage.getItem("harvestlink_profile");
-    this.profile = storedProfile ? JSON.parse(storedProfile) : { ...seed.INITIAL_PROFILE };
+    // Load separate profiles
+    const storedFarmerProfile = localStorage.getItem("harvestlink_farmer_profile");
+    this.farmerProfile = storedFarmerProfile ? JSON.parse(storedFarmerProfile) : { ...seed.INITIAL_FARMER_PROFILE };
+    
+    const storedBuyerProfile = localStorage.getItem("harvestlink_buyer_profile");
+    this.buyerProfile = storedBuyerProfile ? JSON.parse(storedBuyerProfile) : { ...seed.INITIAL_BUYER_PROFILE };
+    
+    this.currentRole = localStorage.getItem("harvestlink_active_role") || "Farmer";
+    this.profile = this.currentRole === "Farmer" ? this.farmerProfile : this.buyerProfile;
     
     // Listings
     const storedListings = localStorage.getItem("harvestlink_listings");
@@ -39,7 +44,8 @@ class HarvestLinkApp {
   }
 
   saveToStorage() {
-    localStorage.setItem("harvestlink_profile", JSON.stringify(this.profile));
+    localStorage.setItem("harvestlink_farmer_profile", JSON.stringify(this.farmerProfile));
+    localStorage.setItem("harvestlink_buyer_profile", JSON.stringify(this.buyerProfile));
     localStorage.setItem("harvestlink_listings", JSON.stringify(this.listings));
     localStorage.setItem("harvestlink_enquiries", JSON.stringify(this.enquiries));
   }
@@ -83,6 +89,11 @@ class HarvestLinkApp {
     document.getElementById("sidebar-role").innerText = this.currentRole;
     document.getElementById("sidebar-avatar").innerText = this.getInitials(this.profile.name);
     
+    const sidebarCompany = document.getElementById("sidebar-company");
+    if (sidebarCompany) {
+      sidebarCompany.innerText = this.profile.farmName || "";
+    }
+
     document.getElementById("profile-display-name").innerText = this.profile.name;
     document.getElementById("profile-avatar-large").innerText = this.getInitials(this.profile.name);
     
@@ -159,7 +170,11 @@ class HarvestLinkApp {
     switch(tabId) {
       case "dashboard":
         title.innerText = "Dashboard";
-        subtitle.innerText = `Welcome back, ${this.profile.name}! Here is your farming summary.`;
+        if (this.currentRole === "Farmer") {
+          subtitle.innerText = `Welcome back, ${this.farmerProfile.name}! Here is your farming summary.`;
+        } else {
+          subtitle.innerText = `Welcome back, ${this.buyerProfile.name}! Here is your purchasing summary.`;
+        }
         this.renderDashboard();
         break;
       case "listings":
@@ -195,6 +210,8 @@ class HarvestLinkApp {
   // --- FARMER / BUYER ROLE SWITCHER ---
   toggleRole(role) {
     this.currentRole = role;
+    localStorage.setItem("harvestlink_active_role", role);
+    this.profile = role === "Farmer" ? this.farmerProfile : this.buyerProfile;
     this.profile.role = role;
     this.saveToStorage();
 
@@ -209,7 +226,6 @@ class HarvestLinkApp {
     if (role === "Farmer") {
       farmerBtn.classList.add("active");
       buyerBtn.classList.remove("active");
-      // Change dashboard view welcome
       document.getElementById("sidebar-role").innerText = "Farmer";
     } else {
       buyerBtn.classList.add("active");
@@ -252,7 +268,7 @@ class HarvestLinkApp {
     if (this.currentRole === "Farmer") {
       // 1. Compute KPIs
       // Active Farmer Listings
-      const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name);
+      const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
       const activeListingsCount = farmerListings.filter(c => c.status === "Available" || c.status === "Reserved").length;
       document.getElementById("kpi-active-listings").innerText = `${activeListingsCount} Crops`;
 
@@ -340,11 +356,11 @@ class HarvestLinkApp {
       // BUYER DASHBOARD LOGIC
       // 1. Compute KPIs
       // Available Crops (crops from other farmers that are available/reserved)
-      const availableCrops = this.listings.filter(c => c.farmerName !== this.profile.name && c.status !== "Sold");
+      const availableCrops = this.listings.filter(c => c.farmerName !== this.farmerProfile.name && c.status !== "Sold");
       document.getElementById("kpi-buyer-available").innerText = `${availableCrops.length} Crops`;
 
       // Sent Enquiries (enquiries sent by this buyer)
-      const myEnquiries = this.enquiries.filter(e => e.buyerEmail === this.profile.email);
+      const myEnquiries = this.enquiries.filter(e => e.buyerEmail === this.buyerProfile.email);
       const pendingSent = myEnquiries.filter(e => e.status === "Pending").length;
       document.getElementById("kpi-buyer-enquiries").innerText = `${pendingSent} Pending`;
 
@@ -414,7 +430,7 @@ class HarvestLinkApp {
       });
 
       // Add general notifications for newly listed crops by other farmers
-      const othersCrops = this.listings.filter(c => c.farmerName !== this.profile.name);
+      const othersCrops = this.listings.filter(c => c.farmerName !== this.farmerProfile.name);
       othersCrops.slice(-2).forEach(c => {
         alertItems.push({ type: "accent", text: `New arrival: ${c.cropName} (${c.quantity} ${c.unit}) listed in ${c.location} by ${c.farmerName}.`, time: c.createdAt });
       });
@@ -527,7 +543,7 @@ class HarvestLinkApp {
     const grid = document.getElementById("my-listings-grid");
     grid.innerHTML = "";
 
-    const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name);
+    const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
     
     // Sort so most recent comes first
     const sorted = [...farmerListings].reverse();
@@ -600,7 +616,7 @@ class HarvestLinkApp {
     const grid = document.getElementById("my-listings-grid");
     
     // Clear and filter
-    const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name);
+    const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
     
     const filtered = farmerListings.filter(c => {
       const matchQuery = c.cropName.toLowerCase().includes(query) || 
@@ -675,7 +691,7 @@ class HarvestLinkApp {
     const listContainer = document.getElementById("received-enquiries-list");
     listContainer.innerHTML = "";
 
-    const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name);
+    const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
     const listingsIds = farmerListings.map(c => c.id);
     
     // Filter enquiries relating to farmer's crops
@@ -829,7 +845,7 @@ class HarvestLinkApp {
       else if (c.category === "Vegetables") cropIcon = "fa-carrot";
       else if (c.category === "Fruits") cropIcon = "fa-apple-whole";
 
-      const isOwn = c.farmerName === this.profile.name;
+      const isOwn = c.farmerName === this.farmerProfile.name;
 
       card.innerHTML = `
         <div class="crop-card-image">
@@ -908,7 +924,7 @@ class HarvestLinkApp {
       else if (c.category === "Vegetables") cropIcon = "fa-carrot";
       else if (c.category === "Fruits") cropIcon = "fa-apple-whole";
 
-      const isOwn = c.farmerName === this.profile.name;
+      const isOwn = c.farmerName === this.farmerProfile.name;
 
       card.innerHTML = `
         <div class="crop-card-image">
@@ -952,7 +968,7 @@ class HarvestLinkApp {
     document.getElementById("listing-form").reset();
     document.getElementById("listing-id").value = "";
     document.getElementById("listing-harvest-date").value = new Date().toISOString().split('T')[0];
-    document.getElementById("listing-location").value = this.profile.location;
+    document.getElementById("listing-location").value = this.farmerProfile.location;
     
     const modal = document.getElementById("add-listing-modal");
     modal.classList.add("active");
@@ -1023,7 +1039,7 @@ class HarvestLinkApp {
       // Create mode
       const newCrop = {
         id: "list-" + Date.now(),
-        farmerName: this.profile.name,
+        farmerName: this.farmerProfile.name,
         cropName, category, variety, quantity, unit, price, harvestDate, location, description,
         status: "Available",
         createdAt: new Date().toISOString().split('T')[0]
@@ -1069,10 +1085,10 @@ class HarvestLinkApp {
 
     // Auto-fill buyer contact details from active profile if user is Buyer
     if (this.currentRole === "Buyer") {
-      document.getElementById("enquiry-buyer-name").value = this.profile.name;
-      document.getElementById("enquiry-buyer-company").value = this.profile.farmName || "Green Valley Farm";
-      document.getElementById("enquiry-buyer-phone").value = this.profile.phone;
-      document.getElementById("enquiry-buyer-email").value = this.profile.email;
+      document.getElementById("enquiry-buyer-name").value = this.buyerProfile.name;
+      document.getElementById("enquiry-buyer-company").value = this.buyerProfile.farmName || "BigBasket Procurement";
+      document.getElementById("enquiry-buyer-phone").value = this.buyerProfile.phone;
+      document.getElementById("enquiry-buyer-email").value = this.buyerProfile.email;
     } else {
       // Default placeholder buyer text
       document.getElementById("enquiry-buyer-name").value = "Sourcing Officer";
@@ -1128,7 +1144,11 @@ class HarvestLinkApp {
     this.profile.name = document.getElementById("profile-name").value.trim();
     this.profile.farmName = document.getElementById("profile-farm-name").value.trim();
     this.profile.location = document.getElementById("profile-location").value.trim();
-    this.profile.farmSize = document.getElementById("profile-farm-size").value.trim();
+    if (this.currentRole === "Farmer") {
+      this.profile.farmSize = document.getElementById("profile-farm-size").value.trim();
+    } else {
+      this.profile.farmSize = "";
+    }
     this.profile.phone = document.getElementById("profile-phone").value.trim();
     this.profile.email = document.getElementById("profile-email").value.trim();
     this.profile.mainCrops = document.getElementById("profile-crops").value.trim();
@@ -1226,8 +1246,8 @@ class HarvestLinkApp {
     
     const isFarmer = this.currentRole === "Farmer";
     const crops = isFarmer
-      ? this.listings.filter(c => c.farmerName === this.profile.name && c.status !== "Sold")
-      : this.listings.filter(c => c.farmerName !== this.profile.name && c.status !== "Sold");
+      ? this.listings.filter(c => c.farmerName === this.farmerProfile.name && c.status !== "Sold")
+      : this.listings.filter(c => c.farmerName !== this.farmerProfile.name && c.status !== "Sold");
 
     const btnFarmer = document.getElementById("advisor-generate-btn-farmer");
     const btnBuyer = document.getElementById("advisor-generate-btn-buyer");
