@@ -38,7 +38,7 @@
               <span>Dashboard</span>
             </button>
           </li>
-          <li class="nav-item" id="nav-listings">
+          <li class="nav-item farmer-only" id="nav-listings">
             <button onclick="app.switchTab('listings')">
               <i class="fa-solid fa-boxes-stacked"></i>
               <span>My Listings</span>
@@ -121,7 +121,8 @@
       <section class="app-screen active" id="screen-dashboard">
         
         <!-- Metrics Cards -->
-        <div class="metrics-grid">
+        <!-- Farmer Metrics Grid -->
+        <div class="metrics-grid farmer-only">
           <div class="kpi-card kpi-primary">
             <div class="kpi-icon"><i class="fa-solid fa-seedling"></i></div>
             <div class="kpi-details">
@@ -152,6 +153,38 @@
           </div>
         </div>
 
+        <!-- Buyer Metrics Grid -->
+        <div class="metrics-grid buyer-only">
+          <div class="kpi-card kpi-primary">
+            <div class="kpi-icon"><i class="fa-solid fa-store"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Available Crops</span>
+              <span class="kpi-value" id="kpi-buyer-available">0 Crops</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-accent">
+            <div class="kpi-icon"><i class="fa-solid fa-paper-plane"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Sent Enquiries</span>
+              <span class="kpi-value" id="kpi-buyer-enquiries">0 Pending</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="fa-solid fa-basket-shopping"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Purchasing Value</span>
+              <span class="kpi-value" id="kpi-buyer-spent">Rs. 0</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-info">
+            <div class="kpi-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div class="kpi-details">
+              <span class="kpi-label">Active Offers Qty</span>
+              <span class="kpi-value" id="kpi-buyer-active-offers">0 kg</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Charts and Side Activity Feed -->
         <div class="dashboard-grid">
           <div class="panel-card">
@@ -166,7 +199,8 @@
             </div>
           </div>
 
-          <div class="panel-card">
+          <!-- Farmer Activity Feed -->
+          <div class="panel-card farmer-only">
             <div class="panel-header">
               <h3 class="panel-title"><i class="fa-solid fa-bell"></i> Farm Alerts & Recommendations</h3>
             </div>
@@ -174,10 +208,20 @@
               <!-- Rendered dynamically -->
             </ul>
           </div>
+
+          <!-- Buyer Activity Feed -->
+          <div class="panel-card buyer-only">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-bell"></i> Marketplace Updates</h3>
+            </div>
+            <ul class="activity-list" id="dashboard-buyer-alerts">
+              <!-- Rendered dynamically -->
+            </ul>
+          </div>
         </div>
 
-        <!-- Recent Listings Table -->
-        <div class="panel-card">
+        <!-- Recent Listings Table (Farmer Only) -->
+        <div class="panel-card farmer-only">
           <div class="panel-header">
             <h3 class="panel-title"><i class="fa-solid fa-list"></i> My Current Listings Overview</h3>
             <button class="btn btn-secondary btn-sm" onclick="app.switchTab('listings')">View All</button>
@@ -195,6 +239,31 @@
                 </tr>
               </thead>
               <tbody id="dashboard-listings-table">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sent Enquiries Table (Buyer Only) -->
+        <div class="panel-card buyer-only">
+          <div class="panel-header">
+            <h3 class="panel-title"><i class="fa-solid fa-list"></i> My Sent Enquiries & Quotes</h3>
+            <button class="btn btn-secondary btn-sm" onclick="app.switchTab('marketplace')">Marketplace</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Crop Name</th>
+                  <th>Seller (Farmer)</th>
+                  <th>Quantity Proposed</th>
+                  <th>Proposed Price</th>
+                  <th>Submitted Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-buyer-enquiries-table">
                 <!-- Rendered dynamically -->
               </tbody>
             </table>
@@ -281,23 +350,29 @@
           <!-- Left Panel: Smart Selling Planner -->
           <div class="panel-card advisor-left-panel">
             <div class="panel-header">
-              <h3 class="panel-title"><i class="fa-solid fa-chart-pie"></i> Smart Selling Recommendations</h3>
+              <h3 class="panel-title farmer-only"><i class="fa-solid fa-chart-pie"></i> Smart Selling Recommendations</h3>
+              <h3 class="panel-title buyer-only"><i class="fa-solid fa-chart-pie"></i> AI Purchase Valuations</h3>
             </div>
             <div class="crop-selector-card">
               <div class="form-group" style="margin-bottom: 12px;">
-                <label for="advisor-crop-select">Select Your Listed Crop</label>
+                <label for="advisor-crop-select" class="farmer-only">Select Your Listed Crop</label>
+                <label for="advisor-crop-select" class="buyer-only">Select Marketplace Crop to Analyze</label>
                 <select class="select-clean" id="advisor-crop-select" style="width: 100%;" onchange="app.resetAdvisorInsight()">
                   <!-- Dynamically populated with user's crops -->
                 </select>
               </div>
-              <button class="btn btn-accent btn-block" id="advisor-generate-btn" onclick="app.generateAdvisorRecommendation()">
+              <button class="btn btn-accent btn-block farmer-only" id="advisor-generate-btn-farmer" onclick="app.generateAdvisorRecommendation()">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Market Recommendation
+              </button>
+              <button class="btn btn-accent btn-block buyer-only" id="advisor-generate-btn-buyer" onclick="app.generateAdvisorRecommendation()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Purchase Assessment
               </button>
             </div>
             <div class="advisor-insights-container" id="advisor-insights-container">
               <div class="empty-state" id="advisor-insights-empty">
                 <i class="fa-solid fa-chart-line"></i>
-                <p>Select a crop listing and click the button to generate personalized selling target advice and market window forecasts.</p>
+                <p class="farmer-only">Select a crop listing and click the button to generate personalized selling target advice and market window forecasts.</p>
+                <p class="buyer-only">Select a marketplace crop listing and click the button to assess its pricing value, local demand, and get transport suggestions.</p>
               </div>
               <div class="ai-recommendation-result" id="advisor-insights-result" style="display: none;">
                 <!-- Rendered dynamically -->

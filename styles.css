@@ -1569,3 +1569,46 @@ body.dark-mode .enquiry-crop-tag {
   color: var(--color-primary-light);
 }
 
+/* ============================================== */
+/* ROLE SWITCHING DISPLAY RULES & THEMES          */
+/* ============================================== */
+
+/* Role-based element visibility */
+body.role-farmer .farmer-only { display: block !important; }
+body.role-farmer .buyer-only { display: none !important; }
+body.role-buyer .farmer-only { display: none !important; }
+body.role-buyer .buyer-only { display: block !important; }
+
+/* Grid specific blocks */
+body.role-farmer .grid.farmer-only { display: grid !important; }
+body.role-buyer .grid.buyer-only { display: grid !important; }
+
+/* Navigation lists */
+body.role-farmer li.farmer-only { display: list-item !important; }
+body.role-buyer li.buyer-only { display: list-item !important; }
+body.role-farmer li.buyer-only { display: none !important; }
+body.role-buyer li.farmer-only { display: none !important; }
+
+/* Flex-based rows */
+body.role-farmer .flex-row-only { display: flex !important; }
+body.role-buyer .flex-row-only { display: flex !important; }
+
+/* Dynamic Theme Switch: Change accents to Ocean Teal in Buyer Mode */
+body.role-buyer {
+  --color-primary-dark: #0b2545;  /* Deep Navy */
+  --color-primary: #134074;       /* Slate Blue */
+  --color-primary-medium: #0077b6;/* Tech Blue */
+  --color-primary-light: #00b4d8; /* Cyan Blue */
+  --color-primary-ultra-light: #e0f2fe; /* Light Ice Blue */
+  
+  --shadow-glow: 0 0 15px rgba(0, 180, 216, 0.35);
+}
+
+body.role-buyer .kpi-primary {
+  background: linear-gradient(135deg, var(--color-primary-medium), var(--color-primary-light));
+}
+
+body.role-buyer .logo-icon {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+}
+

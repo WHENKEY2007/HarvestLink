@@ -52,6 +52,10 @@ class HarvestLinkApp {
     // Render user details
     this.updateUserDisplay();
     
+    // Set initial role class on body
+    document.body.classList.remove("role-farmer", "role-buyer");
+    document.body.classList.add(`role-${this.currentRole.toLowerCase()}`);
+    
     // Setup initial screen view
     this.switchTab(this.currentTab);
     
@@ -194,6 +198,10 @@ class HarvestLinkApp {
     this.profile.role = role;
     this.saveToStorage();
 
+    // Sync body role class
+    document.body.classList.remove("role-farmer", "role-buyer");
+    document.body.classList.add(`role-${role.toLowerCase()}`);
+
     // Toggle button active classes
     const farmerBtn = document.getElementById("role-btn-farmer");
     const buyerBtn = document.getElementById("role-btn-buyer");
@@ -207,6 +215,11 @@ class HarvestLinkApp {
       buyerBtn.classList.add("active");
       farmerBtn.classList.remove("active");
       document.getElementById("sidebar-role").innerText = "Buyer";
+    }
+
+    // Redirect if buyer lands on a hidden tab (My Listings)
+    if (role === "Buyer" && this.currentTab === "listings") {
+      this.currentTab = "marketplace";
     }
 
     // Refresh display
@@ -236,92 +249,197 @@ class HarvestLinkApp {
 
   // --- DASHBOARD SCREEN LOGIC ---
   renderDashboard() {
-    // 1. Compute KPIs
-    // Active Farmer Listings
-    const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name);
-    const activeListingsCount = farmerListings.filter(c => c.status === "Available" || c.status === "Reserved").length;
-    document.getElementById("kpi-active-listings").innerText = `${activeListingsCount} Crops`;
+    if (this.currentRole === "Farmer") {
+      // 1. Compute KPIs
+      // Active Farmer Listings
+      const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name);
+      const activeListingsCount = farmerListings.filter(c => c.status === "Available" || c.status === "Reserved").length;
+      document.getElementById("kpi-active-listings").innerText = `${activeListingsCount} Crops`;
 
-    // Received Enquiries
-    const listingsIds = farmerListings.map(c => c.id);
-    const pendingEnquiries = this.enquiries.filter(e => listingsIds.includes(e.listingId) && e.status === "Pending").length;
-    document.getElementById("kpi-enquiries").innerText = `${pendingEnquiries} Pending`;
+      // Received Enquiries
+      const listingsIds = farmerListings.map(c => c.id);
+      const pendingEnquiries = this.enquiries.filter(e => listingsIds.includes(e.listingId) && e.status === "Pending").length;
+      document.getElementById("kpi-enquiries").innerText = `${pendingEnquiries} Pending`;
 
-    // Sales Revenue (Sold crops)
-    let totalSales = 0;
-    farmerListings.forEach(c => {
-      if (c.status === "Sold") {
-        totalSales += (c.price * c.quantity);
+      // Sales Revenue (Sold crops)
+      let totalSales = 0;
+      farmerListings.forEach(c => {
+        if (c.status === "Sold") {
+          totalSales += (c.price * c.quantity);
+        }
+      });
+      // Format to INR Currency layout
+      document.getElementById("kpi-sales").innerText = `Rs. ${totalSales.toLocaleString("en-IN")}`;
+
+      // Total Inventory Quantity (Available + Reserved)
+      let totalQty = 0;
+      let mainUnit = "kg";
+      farmerListings.forEach(c => {
+        if (c.status !== "Sold") {
+          totalQty += Number(c.quantity);
+          mainUnit = c.unit; // grab unit
+        }
+      });
+      document.getElementById("kpi-inventory").innerText = `${totalQty.toLocaleString("en-IN")} ${farmerListings.length > 0 ? mainUnit : 'kg'}`;
+
+      // 2. Render Recent Listings Table
+      const tableBody = document.getElementById("dashboard-listings-table");
+      tableBody.innerHTML = "";
+
+      if (farmerListings.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No crop listings created yet. Click "My Listings" tab to publish one!</td></tr>`;
+      } else {
+        // Sort recently created
+        const recent = [...farmerListings].slice(0, 5);
+        recent.forEach(c => {
+          let statusBadge = "";
+          if (c.status === "Available") statusBadge = `<span class="badge badge-success">Available</span>`;
+          else if (c.status === "Reserved") statusBadge = `<span class="badge badge-warning">Reserved</span>`;
+          else statusBadge = `<span class="badge badge-neutral">Sold</span>`;
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><strong>${c.cropName}</strong><br><small style="color:var(--color-text-light);">${c.variety || 'Standard'}</small></td>
+            <td>${c.category}</td>
+            <td>${c.quantity.toLocaleString("en-IN")} ${c.unit}</td>
+            <td>Rs. ${c.price}/${c.unit}</td>
+            <td>${c.harvestDate}</td>
+            <td>${statusBadge}</td>
+          `;
+          tableBody.appendChild(row);
+        });
       }
-    });
-    // Format to INR Currency layout
-    document.getElementById("kpi-sales").innerText = `Rs. ${totalSales.toLocaleString("en-IN")}`;
 
-    // Total Inventory Quantity (Available + Reserved)
-    let totalQty = 0;
-    let mainUnit = "kg";
-    farmerListings.forEach(c => {
-      if (c.status !== "Sold") {
-        totalQty += Number(c.quantity);
-        mainUnit = c.unit; // grab unit
-      }
-    });
-    document.getElementById("kpi-inventory").innerText = `${totalQty.toLocaleString("en-IN")} ${farmerListings.length > 0 ? mainUnit : 'kg'}`;
+      // 3. Render Alerts list
+      const alertsFeed = document.getElementById("dashboard-alerts");
+      alertsFeed.innerHTML = "";
+      
+      // Add default styled suggestions
+      const alertItems = [
+        { type: "success", text: "Organic Roma Tomatoes listing reserved by FreshBasket Sourcing.", time: "Today, 02:30 PM" },
+        { type: "info", text: "Wheat market prices trending upwards in Nashik mandi. Recommended to sell soon.", time: "Yesterday" },
+        { type: "accent", text: "Basmati Rice inquiry received from Karan Johar (Heritage Flour Mills).", time: "2 days ago" }
+      ];
 
-    // 2. Render Recent Listings Table
-    const tableBody = document.getElementById("dashboard-listings-table");
-    tableBody.innerHTML = "";
-
-    if (farmerListings.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No crop listings created yet. Click "My Listings" tab to publish one!</td></tr>`;
-    } else {
-      // Sort recently created
-      const recent = [...farmerListings].slice(0, 5);
-      recent.forEach(c => {
-        let statusBadge = "";
-        if (c.status === "Available") statusBadge = `<span class="badge badge-success">Available</span>`;
-        else if (c.status === "Reserved") statusBadge = `<span class="badge badge-warning">Reserved</span>`;
-        else statusBadge = `<span class="badge badge-neutral">Sold</span>`;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><strong>${c.cropName}</strong><br><small style="color:var(--color-text-light);">${c.variety || 'Standard'}</small></td>
-          <td>${c.category}</td>
-          <td>${c.quantity.toLocaleString("en-IN")} ${c.unit}</td>
-          <td>Rs. ${c.price}/${c.unit}</td>
-          <td>${c.harvestDate}</td>
-          <td>${statusBadge}</td>
+      alertItems.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "activity-item";
+        li.innerHTML = `
+          <div class="activity-marker">
+            <div class="activity-dot ${item.type}"></div>
+            <div class="activity-line"></div>
+          </div>
+          <div class="activity-content">
+            <span class="activity-time">${item.time}</span>
+            <span class="activity-text">${item.text}</span>
+          </div>
         `;
-        tableBody.appendChild(row);
+        alertsFeed.appendChild(li);
+      });
+    } else {
+      // BUYER DASHBOARD LOGIC
+      // 1. Compute KPIs
+      // Available Crops (crops from other farmers that are available/reserved)
+      const availableCrops = this.listings.filter(c => c.farmerName !== this.profile.name && c.status !== "Sold");
+      document.getElementById("kpi-buyer-available").innerText = `${availableCrops.length} Crops`;
+
+      // Sent Enquiries (enquiries sent by this buyer)
+      const myEnquiries = this.enquiries.filter(e => e.buyerEmail === this.profile.email);
+      const pendingSent = myEnquiries.filter(e => e.status === "Pending").length;
+      document.getElementById("kpi-buyer-enquiries").innerText = `${pendingSent} Pending`;
+
+      // Purchasing Value (Sum of accepted quote prices * qty)
+      let totalSpent = 0;
+      myEnquiries.forEach(e => {
+        if (e.status === "Accepted") {
+          totalSpent += (e.priceOffered * e.quantityRequested);
+        }
+      });
+      document.getElementById("kpi-buyer-spent").innerText = `Rs. ${totalSpent.toLocaleString("en-IN")}`;
+
+      // Active Offers Quantity
+      let activeQty = 0;
+      myEnquiries.forEach(e => {
+        if (e.status === "Pending") {
+          activeQty += Number(e.quantityRequested);
+        }
+      });
+      document.getElementById("kpi-buyer-active-offers").innerText = `${activeQty.toLocaleString("en-IN")} kg`;
+
+      // 2. Render Sent Enquiries Table
+      const tableBody = document.getElementById("dashboard-buyer-enquiries-table");
+      tableBody.innerHTML = "";
+
+      if (myEnquiries.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">You haven't sent any enquiries yet. Browse the "Marketplace" to make an offer!</td></tr>`;
+      } else {
+        const recent = [...myEnquiries].reverse().slice(0, 5);
+        recent.forEach(e => {
+          let statusBadge = "";
+          if (e.status === "Pending") statusBadge = `<span class="badge badge-warning">Pending</span>`;
+          else if (e.status === "Accepted") statusBadge = `<span class="badge badge-success">Accepted</span>`;
+          else statusBadge = `<span class="badge badge-danger">Rejected</span>`;
+
+          // find seller name
+          const crop = this.listings.find(c => c.id === e.listingId);
+          const sellerName = crop ? crop.farmerName : "Unknown";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><strong>${e.cropName}</strong></td>
+            <td>${sellerName}</td>
+            <td>${e.quantityRequested.toLocaleString("en-IN")}</td>
+            <td>Rs. ${e.priceOffered}</td>
+            <td>${new Date(e.createdAt).toLocaleDateString()}</td>
+            <td>${statusBadge}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      }
+
+      // 3. Render Marketplace Updates Feed
+      const alertsFeed = document.getElementById("dashboard-buyer-alerts");
+      alertsFeed.innerHTML = "";
+
+      const alertItems = [];
+      // Pull recent enquiries statuses
+      myEnquiries.forEach(e => {
+        if (e.status === "Accepted") {
+          alertItems.push({ type: "success", text: `Your quote for ${e.cropName} was accepted by the seller!`, time: "Recent" });
+        } else if (e.status === "Rejected") {
+          alertItems.push({ type: "danger", text: `Your offer for ${e.cropName} was declined.`, time: "Recent" });
+        } else {
+          alertItems.push({ type: "info", text: `Your bid for ${e.cropName} is currently pending review.`, time: "Active" });
+        }
+      });
+
+      // Add general notifications for newly listed crops by other farmers
+      const othersCrops = this.listings.filter(c => c.farmerName !== this.profile.name);
+      othersCrops.slice(-2).forEach(c => {
+        alertItems.push({ type: "accent", text: `New arrival: ${c.cropName} (${c.quantity} ${c.unit}) listed in ${c.location} by ${c.farmerName}.`, time: c.createdAt });
+      });
+
+      // Ensure we have some items in the feed
+      if (alertItems.length === 0) {
+        alertItems.push({ type: "info", text: "No marketplace updates yet. Go to Marketplace to explore.", time: "Now" });
+      }
+
+      alertItems.slice(0, 5).forEach(item => {
+        const li = document.createElement("li");
+        li.className = "activity-item";
+        li.innerHTML = `
+          <div class="activity-marker">
+            <div class="activity-dot ${item.type}"></div>
+            <div class="activity-line"></div>
+          </div>
+          <div class="activity-content">
+            <span class="activity-time">${item.time}</span>
+            <span class="activity-text">${item.text}</span>
+          </div>
+        `;
+        alertsFeed.appendChild(li);
       });
     }
-
-    // 3. Render Alerts list
-    const alertsFeed = document.getElementById("dashboard-alerts");
-    alertsFeed.innerHTML = "";
-    
-    // Add default styled suggestions
-    const alertItems = [
-      { type: "success", text: "Organic Roma Tomatoes listing reserved by FreshBasket Sourcing.", time: "Today, 02:30 PM" },
-      { type: "info", text: "Wheat market prices trending upwards in Nashik mandi. Recommended to sell soon.", time: "Yesterday" },
-      { type: "accent", text: "Basmati Rice inquiry received from Karan Johar (Heritage Flour Mills).", time: "2 days ago" }
-    ];
-
-    alertItems.forEach(item => {
-      const li = document.createElement("li");
-      li.className = "activity-item";
-      li.innerHTML = `
-        <div class="activity-marker">
-          <div class="activity-dot ${item.type}"></div>
-          <div class="activity-line"></div>
-        </div>
-        <div class="activity-content">
-          <span class="activity-time">${item.time}</span>
-          <span class="activity-text">${item.text}</span>
-        </div>
-      `;
-      alertsFeed.appendChild(li);
-    });
   }
 
   populateChartSelect() {
@@ -901,6 +1019,18 @@ class HarvestLinkApp {
     document.getElementById("enquiry-price").value = crop.price;
     document.getElementById("enquiry-message").value = `We are interested in buying your ${crop.cropName}. Can you share your preferred pickup times?`;
 
+    // Auto-fill buyer contact details from active profile if user is Buyer
+    if (this.currentRole === "Buyer") {
+      document.getElementById("enquiry-buyer-name").value = this.profile.name;
+      document.getElementById("enquiry-buyer-phone").value = this.profile.phone;
+      document.getElementById("enquiry-buyer-email").value = this.profile.email;
+    } else {
+      // Default placeholder buyer text
+      document.getElementById("enquiry-buyer-name").value = "Sourcing Officer (BigBasket)";
+      document.getElementById("enquiry-buyer-phone").value = "+91 98877 66554";
+      document.getElementById("enquiry-buyer-email").value = "sourcing@bigbasket.in";
+    }
+
     const modal = document.getElementById("enquiry-modal");
     modal.classList.add("active");
   }
@@ -1036,27 +1166,36 @@ class HarvestLinkApp {
     }
   }
 
-  // 2. AI Advisor: Dynamic Selling Recommendations
+  // 2. AI Advisor: Dynamic Selling / Buying Recommendations
   populateAdvisorSelect() {
     const select = document.getElementById("advisor-crop-select");
     select.innerHTML = "";
     
-    const farmerListings = this.listings.filter(c => c.farmerName === this.profile.name && c.status !== "Sold");
+    const isFarmer = this.currentRole === "Farmer";
+    const crops = isFarmer
+      ? this.listings.filter(c => c.farmerName === this.profile.name && c.status !== "Sold")
+      : this.listings.filter(c => c.farmerName !== this.profile.name && c.status !== "Sold");
 
-    if (farmerListings.length === 0) {
+    const btnFarmer = document.getElementById("advisor-generate-btn-farmer");
+    const btnBuyer = document.getElementById("advisor-generate-btn-buyer");
+
+    if (crops.length === 0) {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.innerText = "No active listings. Create one first!";
+      opt.innerText = isFarmer ? "No active listings. Create one first!" : "No marketplace listings available.";
       select.appendChild(opt);
-      document.getElementById("advisor-generate-btn").disabled = true;
+      if (btnFarmer) btnFarmer.disabled = true;
+      if (btnBuyer) btnBuyer.disabled = true;
       return;
     }
 
-    document.getElementById("advisor-generate-btn").disabled = false;
-    farmerListings.forEach(c => {
+    if (btnFarmer) btnFarmer.disabled = false;
+    if (btnBuyer) btnBuyer.disabled = false;
+
+    crops.forEach(c => {
       const opt = document.createElement("option");
       opt.value = c.id;
-      opt.innerText = `${c.cropName} (${c.quantity} ${c.unit})`;
+      opt.innerText = `${c.cropName} (${c.quantity} ${c.unit})${isFarmer ? '' : ' - ' + c.farmerName}`;
       select.appendChild(opt);
     });
   }
@@ -1073,11 +1212,16 @@ class HarvestLinkApp {
     const crop = this.listings.find(c => c.id === cropId);
     if (!crop) return;
 
-    const btn = document.getElementById("advisor-generate-btn");
+    const isFarmer = this.currentRole === "Farmer";
+    const btn = isFarmer
+      ? document.getElementById("advisor-generate-btn-farmer")
+      : document.getElementById("advisor-generate-btn-buyer");
+
+    if (!btn) return;
     const originalText = btn.innerHTML;
     
     // Set loading
-    btn.innerHTML = `<span class="spinner"></span> Analyzing Market...`;
+    btn.innerHTML = `<span class="spinner"></span> Analyzing...`;
     btn.disabled = true;
     
     const resultBox = document.getElementById("advisor-insights-result");
@@ -1088,12 +1232,12 @@ class HarvestLinkApp {
     resultBox.innerHTML = `
       <div style="text-align:center; padding: 30px;">
         <div class="spinner spinner-primary" style="width: 32px; height: 32px; margin-bottom:12px;"></div>
-        <p style="color:var(--color-text-medium);">AI is gathering local Mandi pricing index data & forecasting recommendations...</p>
+        <p style="color:var(--color-text-medium);">${isFarmer ? 'AI is gathering local Mandi pricing index data & forecasting recommendations...' : 'AI is assessing seller pricing, quality factors, and transport logistics...'}</p>
       </div>
     `;
 
     try {
-      const markdown = await window.GeminiService.getSellingSuggestions(crop);
+      const markdown = await window.GeminiService.getSellingSuggestions(crop, !isFarmer);
       // Basic markdown conversions
       resultBox.innerHTML = this.parseBasicMarkdown(markdown);
     } catch(err) {

@@ -126,6 +126,19 @@ const INITIAL_ENQUIRIES = [
     message: "Offering 25 Rs/kg for the full lot. Quick cash payment on pickup.",
     status: "Rejected",
     createdAt: "2026-06-22T09:00:00Z"
+  },
+  {
+    id: "enq-mock-buyer",
+    listingId: "list-4",
+    cropName: "Red Onions",
+    buyerName: "Ramesh Patel",
+    buyerPhone: "+91 98765 43210",
+    buyerEmail: "ramesh.patel@greenvalley.com",
+    quantityRequested: 1000,
+    priceOffered: 21,
+    message: "Interested in purchasing 1 ton of Red Onions. Can we coordinate delivery to Nashik?",
+    status: "Pending",
+    createdAt: "2026-07-18T11:00:00Z"
   }
 ];
 

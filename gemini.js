@@ -100,7 +100,7 @@ Write a description that highlights the freshness, quality, potential uses, and 
     return this.callGemini(prompt);
   }
 
-  async getSellingSuggestions(crop) {
+  async getSellingSuggestions(crop, isBuyer = false) {
     const name = crop.cropName || crop.name || "Crop";
     const category = crop.category || "";
     const variety = crop.variety || "";
@@ -110,10 +110,28 @@ Write a description that highlights the freshness, quality, potential uses, and 
     const location = crop.location || "";
 
     if (!this.isLive()) {
-      return this.simulateSuggestions({ name, category, variety, quantity, unit, price, location });
+      return this.simulateSuggestions({ name, category, variety, quantity, unit, price, location }, isBuyer);
     }
 
-    const prompt = `You are a smart agricultural market analyst. Provide data-driven selling recommendations and market insights for the following crop listing.
+    let prompt = "";
+    if (isBuyer) {
+      prompt = `You are a smart agricultural procurement analyst. Provide purchase evaluation suggestions for a buyer interested in this crop listing.
+Crop Details:
+- Crop Name: ${name}
+- Category: ${category}
+- Variety: ${variety || "Standard"}
+- Quantity: ${quantity} ${unit}
+- Seller Asking Price: Rs. ${price} per ${unit}
+- Location: ${location}
+
+Provide a structured analysis in simple, encouraging language:
+1. Pricing Assessment: Is the seller's asking price of Rs. ${price} per ${unit} fair compared to market rates? Should the buyer negotiate, and what is a reasonable target range?
+2. Demand & Availability: Is this crop variety in short supply or high availability?
+3. Logistics & Transport: One practical tip for transporting/storing this crop from ${location}.
+4. Purchasing Recommendation: Buy immediately, negotiate, or look for other listings?
+Make the layout highly readable, and keep the total response under 250 words.`;
+    } else {
+      prompt = `You are a smart agricultural market analyst. Provide data-driven selling recommendations and market insights for the following crop listing.
 Crop Details:
 - Crop Name: ${name}
 - Category: ${category}
@@ -128,6 +146,7 @@ Provide a structured analysis in simple, encouraging language:
 3. Recommended Price Target: Is Rs. ${price} per ${unit} fair, or should they adjust it?
 4. Storage Tip: One practical advice to preserve quality while waiting to sell.
 Make the layout highly readable, and keep the total response under 250 words.`;
+    }
 
     return this.callGemini(prompt);
   }
@@ -176,39 +195,75 @@ Make the layout highly readable, and keep the total response under 250 words.`;
     });
   }
 
-  simulateSuggestions(crop) {
+  simulateSuggestions(crop, isBuyer = false) {
     return new Promise((resolve) => {
       setTimeout(() => {
         const nameLower = crop.name.toLowerCase();
-        let demand = "Moderate";
-        let window = "Sell gradually over the next 2-3 weeks";
-        let priceRec = `Your target price of Rs. ${crop.price}/${crop.unit} matches current local market indices.`;
-        let storageTip = "Keep in a cool, well-ventilated warehouse off the ground.";
-        let analysis = "";
+        
+        if (isBuyer) {
+          let priceAssessment = `The seller's asking price of Rs. ${crop.price}/${crop.unit} is fair and matches local wholesale rates.`;
+          let demandStatus = "Moderate supply available in this sector.";
+          let logisticsTip = `Consider consolidating pickup with other buyers from ${crop.location} to lower transportation cost per unit.`;
+          let recommendation = "Proceed to send enquiry. Attempt to negotiate a 3-5% discount if buying the entire batch.";
+          let summary = "";
 
-        if (nameLower.includes("wheat")) {
-          demand = "High Demand";
-          window = "Hold for 2 weeks, then sell";
-          priceRec = `Consider raising your target by 3-5% (to Rs. 29-30/${crop.unit}). Current government procurement rates are rising, and wholesale market arrivals are slowing down.`;
-          storageTip = "Ensure storage bags are stacked on wooden pallets to prevent ground moisture absorption, and maintain a humidity level below 12%.";
-          analysis = "Due to a minor shortfall in late-season harvests in neighboring districts, millers are actively seeking quality Sharbati grain. Holding for a brief period will yield a better premium.";
-        } else if (nameLower.includes("tomato")) {
-          demand = "Very High (Seasonal)";
-          window = "Sell immediately within 3 days";
-          priceRec = `Maintain your current rate of Rs. ${crop.price}/${crop.unit}. Supply is highly volatile, and delayed sales increase risk of spoilage.`;
-          storageTip = "Store in a shaded, well-ventilated area between 12-15°C. Avoid stacking crates more than 5 levels high to prevent crushing.";
-          analysis = "Monsoon disruptions have affected transport links, leading to supply spikes in nearby cities. Your location has a competitive logistics edge. Liquidate this perishable stock quickly.";
-        } else if (nameLower.includes("rice")) {
-          demand = "Stable / High (Export Support)";
-          window = "Hold for mid-season contract rates";
-          priceRec = `Your pricing of Rs. 85 is reasonable for aged grains. You could negotiate up to Rs. 88 for buyers asking for packaging customization.`;
-          storageTip = "Conduct monthly fumigation and check bag seams for rodent signs. Maintain dry conditions.";
-          analysis = "Aged Basmati is seeing strong enquiry volumes from urban distribution centers. Wholesale traders are stocking up ahead of festival season demands.";
+          if (nameLower.includes("wheat")) {
+            priceAssessment = `Rs. ${crop.price}/${crop.unit} is slightly high. Recommended target buy rate is Rs. 26-27/${crop.unit}.`;
+            demandStatus = "High demand, but local arrivals in surrounding mandis are expected to surge next week.";
+            logisticsTip = "Use dry, clean container trucks. Avoid any exposure to moisture during transport.";
+            recommendation = "Negotiate aggressively. Try to close the deal at Rs. 27 per kg.";
+            summary = "Wheat markets are stable but upcoming harvest arrivals will cool the rates slightly. Negotiating will yield a better margins.";
+          } else if (nameLower.includes("tomato")) {
+            priceAssessment = `Rs. ${crop.price}/${crop.unit} is highly competitive. Local city retail rates are over Rs. 60/kg.`;
+            demandStatus = "Extremely high demand due to rain-induced logistics delays from southern states.";
+            logisticsTip = "Arrange direct immediate pickup in ventilated plastic crates. Do not store in warm warehouses.";
+            recommendation = "Buy immediately. Lock in the quantity before other buyers bid.";
+            summary = "Tomatoes are highly perishable and supply lines are disrupted. Securing this direct farm batch quickly is highly recommended.";
+          } else {
+            summary = `Local listings for ${crop.name} are consistent. Secure this batch if quality inspection parameters are satisfied.`;
+          }
+
+          const buyerRec = `### AI Purchase Valuation for ${crop.name}
+
+* **Pricing Assessment**: ${priceAssessment}
+* **Market Demand / Supply**: ${demandStatus}
+* **Logistics Advice**: ${logisticsTip}
+* **Action Recommendation**: **${recommendation}**
+
+**AI Purchase Insight:**
+${summary} *(Note: Activate Gemini Live Mode in settings for real-time market data API searches)*`;
+
+          resolve(buyerRec);
         } else {
-          analysis = `Local market reports for ${crop.name} indicate stable supply lines. Regional mandi arrivals are consistent, keeping price volatility low.`;
-        }
+          let demand = "Moderate";
+          let window = "Sell gradually over the next 2-3 weeks";
+          let priceRec = `Your target price of Rs. ${crop.price}/${crop.unit} matches current local market indices.`;
+          let storageTip = "Keep in a cool, well-ventilated warehouse off the ground.";
+          let analysis = "";
 
-        const recommendation = `### Market Analysis for ${crop.name}
+          if (nameLower.includes("wheat")) {
+            demand = "High Demand";
+            window = "Hold for 2 weeks, then sell";
+            priceRec = `Consider raising your target by 3-5% (to Rs. 29-30/${crop.unit}). Current government procurement rates are rising, and wholesale market arrivals are slowing down.`;
+            storageTip = "Ensure storage bags are stacked on wooden pallets to prevent ground moisture absorption, and maintain a humidity level below 12%.";
+            analysis = "Due to a minor shortfall in late-season harvests in neighboring districts, millers are actively seeking quality Sharbati grain. Holding for a brief period will yield a better premium.";
+          } else if (nameLower.includes("tomato")) {
+            demand = "Very High (Seasonal)";
+            window = "Sell immediately within 3 days";
+            priceRec = `Maintain your current rate of Rs. ${crop.price}/${crop.unit}. Supply is highly volatile, and delayed sales increase risk of spoilage.`;
+            storageTip = "Store in a shaded, well-ventilated area between 12-15°C. Avoid stacking crates more than 5 levels high to prevent crushing.";
+            analysis = "Monsoon disruptions have affected transport links, leading to supply spikes in nearby cities. Your location has a competitive logistics edge. Liquidate this perishable stock quickly.";
+          } else if (nameLower.includes("rice")) {
+            demand = "Stable / High (Export Support)";
+            window = "Hold for mid-season contract rates";
+            priceRec = `Your pricing of Rs. 85 is reasonable for aged grains. You could negotiate up to Rs. 88 for buyers asking for packaging customization.`;
+            storageTip = "Conduct monthly fumigation and check bag seams for rodent signs. Maintain dry conditions.";
+            analysis = "Aged Basmati is seeing strong enquiry volumes from urban distribution centers. Wholesale traders are stocking up ahead of festival season demands.";
+          } else {
+            analysis = `Local market reports for ${crop.name} indicate stable supply lines. Regional mandi arrivals are consistent, keeping price volatility low.`;
+          }
+
+          const recommendation = `### Market Analysis for ${crop.name}
 
 * **Demand Status**: **${demand}**
 * **Recommended Window**: ${window}
@@ -218,7 +273,8 @@ Make the layout highly readable, and keep the total response under 250 words.`;
 **AI Market Insight Summary:**
 ${analysis} *(Note: Activate Gemini Live Mode in settings for real-time market data API searches)*`;
 
-        resolve(recommendation);
+          resolve(recommendation);
+        }
       }, 1000);
     });
   }
