@@ -72,14 +72,16 @@ window.HarvestLinkAuth = {
     }
 
     // 4. Validate Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDummyKeyForHarvestLinkHackathon",
-      authDomain: "harvestlink-hackathon.firebaseapp.com",
-      projectId: "harvestlink-hackathon",
-      storageBucket: "harvestlink-hackathon.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:abcdef123456"
-    };
+   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCQTbGXYqMBjoHEuo-mIgWV-rRyFTcW5G4",
+  authDomain: "harvestlink-ai-a5e0d.firebaseapp.com",
+  projectId: "harvestlink-ai-a5e0d",
+  storageBucket: "harvestlink-ai-a5e0d.firebasestorage.app",
+  messagingSenderId: "678383726867",
+  appId: "1:678383726867:web:42d880b7f7497a3925eae6",
+  measurementId: "G-W1W4LVV9K8"
+};
 
     if (!this.isConfigComplete(firebaseConfig)) {
       this.log("Firebase configuration is incomplete.", true);
