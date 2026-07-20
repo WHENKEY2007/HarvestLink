@@ -20,14 +20,9 @@ class GeminiService {
     return !!this.apiKey;
   }
 
-  async callGemini(prompt) {
-    if (!this.apiKey) {
-      throw new Error("API Key is missing. Switch to Demo Mode or configure a key.");
-    }
-
-    // Using gemini-1.5-flash as the standard stable model for browser requests
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
-    
+  async validateApiKey(key) {
+    if (!key) throw new Error("API Key is empty.");
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key.trim()}`;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -35,40 +30,87 @@ class GeminiService {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000
-          }
+          contents: [{ parts: [{ text: "Respond with only one word: OK" }] }]
         })
       });
-
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error?.message || `HTTP error! status: ${response.status}`;
+        const code = response.status;
+        const msg = errorData.error?.message || "";
+        
+        if (code === 400) {
+          throw new Error("Invalid request or unsupported model config.");
+        } else if (code === 403) {
+          throw new Error("Invalid API Key. Please verify your credentials.");
+        } else if (code === 429) {
+          throw new Error("Quota exceeded. Please check your Gemini billing details or try again later.");
+        } else {
+          throw new Error(msg || `API Error (HTTP ${code})`);
+        }
+      }
+      return true;
+    } catch (err) {
+      if (err.name === "TypeError" || err.message.includes("Failed to fetch")) {
+        throw new Error("Network error. Please check your internet connection.");
+      }
+      throw err;
+    }
+  }
+
+  async callGemini(prompt) {
+    if (!this.apiKey) {
+      throw new Error("API Key is missing. Switch to Demo Mode or configure a key.");
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const code = response.status;
+      const errorMessage = errorData.error?.message || `HTTP error! status: ${response.status}`;
+      
+      if (code === 400) {
+        throw new Error("Invalid request or model config: " + errorMessage);
+      } else if (code === 429) {
+        throw new Error("Quota exceeded. API rate limit hit.");
+      } else if (code === 403) {
+        throw new Error("Authentication failed: Invalid API Key.");
+      } else {
         throw new Error(errorMessage);
       }
-
-      const data = await response.json();
-      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      
-      if (!responseText) {
-        throw new Error("Empty response received from Gemini API.");
-      }
-
-      return responseText;
-    } catch (error) {
-      console.error("Gemini API Error:", error);
-      throw error;
     }
+
+    const data = await response.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!responseText) {
+      throw new Error("Empty response received from Gemini API.");
+    }
+
+    return responseText;
   }
 
   async generateCropDescription(crop) {
@@ -97,7 +139,15 @@ Crop Details:
 
 Write a description that highlights the freshness, quality, potential uses, and storage conditions. Keep it clean, professional, and under 150 words. Do not include markdown titles.`;
 
-    return this.callGemini(prompt);
+    try {
+      return await this.callGemini(prompt);
+    } catch (error) {
+      console.warn("Gemini Live failed, falling back to Demo Mode:", error);
+      if (window.onGeminiFallback) {
+        window.onGeminiFallback(error.message);
+      }
+      return this.simulateDescription({ name, category, variety, quantity, unit, price, location, harvestDate });
+    }
   }
 
   async getSellingSuggestions(crop, isBuyer = false) {
@@ -148,7 +198,15 @@ Provide a structured analysis in simple, encouraging language:
 Make the layout highly readable, and keep the total response under 250 words.`;
     }
 
-    return this.callGemini(prompt);
+    try {
+      return await this.callGemini(prompt);
+    } catch (error) {
+      console.warn("Gemini Live failed, falling back to Demo Mode:", error);
+      if (window.onGeminiFallback) {
+        window.onGeminiFallback(error.message);
+      }
+      return this.simulateSuggestions({ name, category, variety, quantity, unit, price, location }, isBuyer);
+    }
   }
 
   async askFarmingQuestion(question, chatHistory = []) {
@@ -158,14 +216,21 @@ Make the layout highly readable, and keep the total response under 250 words.`;
 
     const systemContext = "You are HarvestLink AI, an expert agricultural advisor. Your job is to help farmers and agricultural buyers with crop listings, market pricing insights, pest control, weather preparation, organic farming techniques, and logistics. Be encouraging, concise, practical, and clear. Format responses with markdown lists where appropriate.";
     
-    // Construct prompt with chat history
     let prompt = `${systemContext}\n\n`;
     chatHistory.forEach(msg => {
-      prompt += `${msg.sender === "user" ? "Farmer/User" : "HarvestLink AI"}: ${msg.text}\n`;
+      prompt += `${msg.sender === "user" ? "User" : "HarvestLink AI"}: ${msg.text}\n`;
     });
-    prompt += `Farmer/User: ${question}\nHarvestLink AI:`;
+    prompt += `User: ${question}\nHarvestLink AI:`;
 
-    return this.callGemini(prompt);
+    try {
+      return await this.callGemini(prompt);
+    } catch (error) {
+      console.warn("Gemini Live failed, falling back to Demo Mode:", error);
+      if (window.onGeminiFallback) {
+        window.onGeminiFallback(error.message);
+      }
+      return this.simulateChatResponse(question);
+    }
   }
 
   // --- DEMO MODE SIMULATIONS ---

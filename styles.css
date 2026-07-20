@@ -1784,4 +1784,203 @@ body.dark-mode .proposal-message-box {
   background-color: rgba(255, 255, 255, 0.03);
 }
 
+/* ============================================== */
+/* LOGIN SCREEN STYLE SYSTEM                      */
+/* ============================================== */
+
+#login-layout {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #134074, #134074, #0b2545, #0077b6);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-container {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.login-logo {
+  color: white;
+}
+
+.login-logo i {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #ff9f1c, #ffe494);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 10px rgba(255, 159, 28, 0.4));
+}
+
+.login-logo h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  font-family: var(--font-heading);
+}
+
+.login-logo p {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.login-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: 30px 25px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-card h3 {
+  font-size: 1.25rem;
+  margin: 0 0 12px 0;
+  color: var(--color-text-dark);
+}
+
+.login-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-medium);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* Role Selection Option Buttons */
+.role-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.role-option-btn {
+  background: var(--color-bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.role-option-btn:hover {
+  border-color: var(--color-primary-medium);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.role-option-btn i {
+  font-size: 2rem;
+  color: var(--color-primary-medium);
+}
+
+.role-option-btn h4 {
+  margin: 2px 0 0 0;
+  color: var(--color-text-dark);
+  font-weight: 700;
+}
+
+.role-option-btn p {
+  font-size: 0.72rem;
+  color: var(--color-text-light);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ============================================== */
+/* TOAST NOTIFICATION STYLING                     */
+/* ============================================== */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background-color: var(--color-bg-card);
+  color: var(--color-text-dark);
+  padding: 12px 20px;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  border-left: 5px solid var(--color-primary-medium);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+  max-width: 420px;
+  font-size: 0.88rem;
+  transform: translateY(50px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast.success {
+  border-left-color: #2ec4b6;
+}
+
+.toast.error {
+  border-left-color: #e63946;
+}
+
+.toast.info {
+  border-left-color: #0077b6;
+}
+
+/* Loading Spinner micro-details */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}
+
+.spinner-icon {
+  animation: fa-spin 1s infinite linear;
+}
+
 

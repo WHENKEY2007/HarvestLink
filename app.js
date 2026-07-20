@@ -1,17 +1,41 @@
 class HarvestLinkApp {
   constructor() {
+    this.currentUser = null;
+    this.auth = null;
+    
+    // Config Firebase if globally available
+    if (typeof firebase !== 'undefined') {
+      const firebaseConfig = {
+        apiKey: "AIzaSyDummyKeyForHarvestLinkHackathon",
+        authDomain: "harvestlink-hackathon.firebaseapp.com",
+        projectId: "harvestlink-hackathon",
+        storageBucket: "harvestlink-hackathon.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:abcdef123456"
+      };
+      try {
+        firebase.initializeApp(firebaseConfig);
+        this.auth = firebase.auth();
+      } catch (err) {
+        console.warn("Firebase App initialize error or already exists:", err);
+      }
+    }
+
+    // Set fallback onGeminiFallback to handle live modes
+    window.onGeminiFallback = (errMsg) => {
+      window.GeminiService.setApiKey(""); // clear key to fall back to demo mode
+      this.syncApiStatus();
+      this.showToast(`Live AI unavailable. Switched to Demo Mode.`, "error");
+    };
+
     this.initStorage();
     this.currentTab = "dashboard";
     this.chart = null;
-    
-    // Initial Chat log
-    this.chatHistory = [
-      { sender: "bot", text: "Welcome to HarvestLink AI! I am your agricultural advisor. How can I help you today with crops, pest control, weather preparation, or market insights?" }
-    ];
 
     // Initialize UI on page load
     document.addEventListener("DOMContentLoaded", () => {
       this.initUI();
+      this.setupAuthListener();
     });
   }
 
@@ -19,15 +43,11 @@ class HarvestLinkApp {
   initStorage() {
     const seed = window.HarvestLinkMockData;
     
-    // Load separate profiles
-    const storedFarmerProfile = localStorage.getItem("harvestlink_farmer_profile");
-    this.farmerProfile = storedFarmerProfile ? JSON.parse(storedFarmerProfile) : { ...seed.INITIAL_FARMER_PROFILE };
-    
-    const storedBuyerProfile = localStorage.getItem("harvestlink_buyer_profile");
-    this.buyerProfile = storedBuyerProfile ? JSON.parse(storedBuyerProfile) : { ...seed.INITIAL_BUYER_PROFILE };
-    
-    this.currentRole = localStorage.getItem("harvestlink_active_role") || "Farmer";
-    this.profile = this.currentRole === "Farmer" ? this.farmerProfile : this.buyerProfile;
+    // Profiles initialized dynamically inside initUserProfiles()
+    this.farmerProfile = { ...seed.INITIAL_FARMER_PROFILE };
+    this.buyerProfile = { ...seed.INITIAL_BUYER_PROFILE };
+    this.profile = this.farmerProfile;
+    this.currentRole = "Farmer";
     
     // Listings
     const storedListings = localStorage.getItem("harvestlink_listings");
@@ -37,17 +57,218 @@ class HarvestLinkApp {
     const storedEnquiries = localStorage.getItem("harvestlink_enquiries");
     this.enquiries = storedEnquiries ? JSON.parse(storedEnquiries) : [ ...seed.INITIAL_ENQUIRIES ];
 
+    // Chat History
+    const storedChat = localStorage.getItem("harvestlink_chathistory");
+    this.chatHistory = storedChat ? JSON.parse(storedChat) : [
+      { sender: "bot", text: "Welcome to HarvestLink AI! I am your agricultural advisor. How can I help you today with crops, pest control, weather preparation, or market insights?" }
+    ];
+
     // Market Trends pricing seed
     this.marketTrends = seed.MARKET_TRENDS_SEED;
-
-    this.saveToStorage();
   }
 
   saveToStorage() {
-    localStorage.setItem("harvestlink_farmer_profile", JSON.stringify(this.farmerProfile));
-    localStorage.setItem("harvestlink_buyer_profile", JSON.stringify(this.buyerProfile));
+    if (this.currentUser) {
+      const uid = this.currentUser.uid;
+      localStorage.setItem(`harvestlink_farmer_profile_${uid}`, JSON.stringify(this.farmerProfile));
+      localStorage.setItem(`harvestlink_buyer_profile_${uid}`, JSON.stringify(this.buyerProfile));
+      localStorage.setItem(`harvestlink_active_role_${uid}`, this.currentRole);
+      localStorage.setItem("harvestlink_current_user", JSON.stringify(this.currentUser));
+    }
     localStorage.setItem("harvestlink_listings", JSON.stringify(this.listings));
     localStorage.setItem("harvestlink_enquiries", JSON.stringify(this.enquiries));
+    localStorage.setItem("harvestlink_chathistory", JSON.stringify(this.chatHistory));
+    
+    // Automatically trigger immediate real-time dashboard / UI updates
+    this.syncAllDisplays();
+  }
+
+  syncAllDisplays() {
+    this.updateUserDisplay();
+    this.renderDashboard();
+    
+    if (this.currentTab === "listings") {
+      this.renderMyListings();
+    } else if (this.currentTab === "marketplace") {
+      this.renderMarketplace();
+    } else if (this.currentTab === "ai-advisor") {
+      this.populateAdvisorSelect();
+    }
+  }
+
+  setupAuthListener() {
+    if (this.auth) {
+      this.auth.onAuthStateChanged(user => {
+        if (user) {
+          this.currentUser = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || "Google User",
+            photoURL: user.photoURL || ""
+          };
+          localStorage.setItem("harvestlink_current_user", JSON.stringify(this.currentUser));
+          this.initUserProfiles();
+          this.hideLoginScreen();
+        } else {
+          this.currentUser = null;
+          localStorage.removeItem("harvestlink_current_user");
+          this.showLoginScreen();
+        }
+      });
+    } else {
+      const savedUser = localStorage.getItem("harvestlink_current_user");
+      if (savedUser) {
+        this.currentUser = JSON.parse(savedUser);
+        this.initUserProfiles();
+        this.hideLoginScreen();
+      } else {
+        this.showLoginScreen();
+      }
+    }
+  }
+
+  initUserProfiles() {
+    if (!this.currentUser) return;
+    const seed = window.HarvestLinkMockData;
+    const uid = this.currentUser.uid;
+    
+    const storedFarmer = localStorage.getItem(`harvestlink_farmer_profile_${uid}`);
+    this.farmerProfile = storedFarmer ? JSON.parse(storedFarmer) : { 
+      ...seed.INITIAL_FARMER_PROFILE, 
+      name: this.currentUser.displayName, 
+      email: this.currentUser.email 
+    };
+    
+    const storedBuyer = localStorage.getItem(`harvestlink_buyer_profile_${uid}`);
+    this.buyerProfile = storedBuyer ? JSON.parse(storedBuyer) : { 
+      ...seed.INITIAL_BUYER_PROFILE, 
+      name: this.currentUser.displayName, 
+      email: this.currentUser.email 
+    };
+    
+    this.currentRole = localStorage.getItem(`harvestlink_active_role_${uid}`) || "Farmer";
+    this.profile = this.currentRole === "Farmer" ? this.farmerProfile : this.buyerProfile;
+    
+    this.syncAllDisplays();
+  }
+
+  showLoginScreen() {
+    const loginLayout = document.getElementById("login-layout");
+    const appLayout = document.getElementById("app-layout");
+    if (loginLayout) loginLayout.style.display = "flex";
+    if (appLayout) appLayout.style.display = "none";
+    
+    const loginCard = document.getElementById("login-card");
+    const roleCard = document.getElementById("role-selection-card");
+    if (loginCard) loginCard.style.display = "block";
+    if (roleCard) roleCard.style.display = "none";
+  }
+
+  hideLoginScreen() {
+    const uid = this.currentUser.uid;
+    const activeRole = localStorage.getItem(`harvestlink_active_role_${uid}`);
+    
+    if (!activeRole) {
+      const loginCard = document.getElementById("login-card");
+      const roleCard = document.getElementById("role-selection-card");
+      if (loginCard) loginCard.style.display = "none";
+      if (roleCard) roleCard.style.display = "block";
+    } else {
+      const loginLayout = document.getElementById("login-layout");
+      const appLayout = document.getElementById("app-layout");
+      if (loginLayout) loginLayout.style.display = "none";
+      if (appLayout) appLayout.style.display = "flex";
+      this.toggleRole(activeRole);
+    }
+  }
+
+  selectInitialRole(role) {
+    const uid = this.currentUser.uid;
+    localStorage.setItem(`harvestlink_active_role_${uid}`, role);
+    this.hideLoginScreen();
+  }
+
+  loginWithGoogle() {
+    if (!this.auth) {
+      this.showToast("Firebase Authentication could not be loaded. Continuing in Demo Mode.", "info");
+      this.loginWithDemo();
+      return;
+    }
+    const btn = document.getElementById("btn-login-google");
+    const originalText = btn ? btn.innerHTML : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Connecting...`;
+    }
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+    this.auth.signInWithPopup(provider)
+      .then((result) => {
+        this.showToast("Signed in successfully with Google!", "success");
+      })
+      .catch((error) => {
+        console.error("Google Sign-In Error:", error);
+        this.showToast(`Authentication failed: ${error.message}`, "error");
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText || `<i class="fa-brands fa-google"></i> Sign in with Google`;
+        }
+      });
+  }
+
+  loginWithDemo() {
+    this.currentUser = {
+      uid: "demo-user-123",
+      email: "demo.farmer@harvestlink.in",
+      displayName: "Ramesh Patel",
+      photoURL: ""
+    };
+    localStorage.setItem("harvestlink_current_user", JSON.stringify(this.currentUser));
+    this.initUserProfiles();
+    this.hideLoginScreen();
+    this.showToast("Logged in as Demo User.", "success");
+  }
+
+  logout() {
+    if (confirm("Are you sure you want to sign out?")) {
+      if (this.auth) {
+        this.auth.signOut().then(() => {
+          this.showToast("Logged out successfully.", "info");
+        });
+      } else {
+        this.currentUser = null;
+        localStorage.removeItem("harvestlink_current_user");
+        this.showLoginScreen();
+        this.showToast("Logged out from Demo Session.", "info");
+      }
+    }
+  }
+
+  showToast(message, type = "info") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    
+    let icon = "fa-circle-info";
+    if (type === "success") icon = "fa-circle-check";
+    else if (type === "error") icon = "fa-circle-xmark";
+
+    toast.innerHTML = `
+      <i class="fa-solid ${icon}"></i>
+      <span>${message}</span>
+    `;
+    container.appendChild(toast);
+
+    // Trigger reflow
+    setTimeout(() => toast.classList.add("show"), 50);
+
+    // Remove toast
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
   }
 
   // --- UI INITIALIZATION ---
@@ -265,16 +486,16 @@ class HarvestLinkApp {
 
   // --- DASHBOARD SCREEN LOGIC ---
   renderDashboard() {
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
     if (this.currentRole === "Farmer") {
       // 1. Compute KPIs
       // Active Farmer Listings
-      const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
+      const farmerListings = this.listings.filter(c => c.farmerId === userUid);
       const activeListingsCount = farmerListings.filter(c => c.status === "Available" || c.status === "Reserved").length;
       document.getElementById("kpi-active-listings").innerText = `${activeListingsCount} Crops`;
 
       // Received Enquiries
-      const listingsIds = farmerListings.map(c => c.id);
-      const pendingEnquiries = this.enquiries.filter(e => listingsIds.includes(e.listingId) && e.status === "Pending").length;
+      const pendingEnquiries = this.enquiries.filter(e => e.farmerId === userUid && e.status === "Pending").length;
       document.getElementById("kpi-enquiries").innerText = `${pendingEnquiries} Pending`;
 
       // Sales Revenue (Sold crops)
@@ -284,7 +505,6 @@ class HarvestLinkApp {
           totalSales += (c.price * c.quantity);
         }
       });
-      // Format to INR Currency layout
       document.getElementById("kpi-sales").innerText = `Rs. ${totalSales.toLocaleString("en-IN")}`;
 
       // Total Inventory Quantity (Available + Reserved)
@@ -305,8 +525,7 @@ class HarvestLinkApp {
       if (farmerListings.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No crop listings created yet. Click "My Listings" tab to publish one!</td></tr>`;
       } else {
-        // Sort recently created
-        const recent = [...farmerListings].slice(0, 5);
+        const recent = [...farmerListings].reverse().slice(0, 5);
         recent.forEach(c => {
           let statusBadge = "";
           if (c.status === "Available") statusBadge = `<span class="badge badge-success">Available</span>`;
@@ -330,12 +549,21 @@ class HarvestLinkApp {
       const alertsFeed = document.getElementById("dashboard-alerts");
       alertsFeed.innerHTML = "";
       
-      // Add default styled suggestions
-      const alertItems = [
-        { type: "success", text: "Organic Roma Tomatoes listing reserved by FreshBasket Sourcing.", time: "Today, 02:30 PM" },
-        { type: "info", text: "Wheat market prices trending upwards in Nashik mandi. Recommended to sell soon.", time: "Yesterday" },
-        { type: "accent", text: "Basmati Rice inquiry received from Karan Johar (Heritage Flour Mills).", time: "2 days ago" }
-      ];
+      const alertItems = [];
+      const relevantEnqs = this.enquiries.filter(e => e.farmerId === userUid);
+      relevantEnqs.slice(-3).forEach(e => {
+        if (e.status === "Pending") {
+          alertItems.push({ type: "accent", text: `${e.cropName} offer received from ${e.buyerName} (${e.buyerCompany}).`, time: "Recent" });
+        } else if (e.status === "Accepted") {
+          alertItems.push({ type: "success", text: `You accepted ${e.buyerName}'s offer for ${e.cropName}.`, time: "Recent" });
+        } else {
+          alertItems.push({ type: "info", text: `You rejected offer on ${e.cropName}.`, time: "Recent" });
+        }
+      });
+
+      if (alertItems.length === 0) {
+        alertItems.push({ type: "info", text: "No received enquiries yet.", time: "Now" });
+      }
 
       alertItems.forEach(item => {
         const li = document.createElement("li");
@@ -356,11 +584,11 @@ class HarvestLinkApp {
       // BUYER DASHBOARD LOGIC
       // 1. Compute KPIs
       // Available Crops (crops from other farmers that are available/reserved)
-      const availableCrops = this.listings.filter(c => c.farmerName !== this.farmerProfile.name && c.status !== "Sold");
+      const availableCrops = this.listings.filter(c => c.farmerId !== userUid && c.status !== "Sold");
       document.getElementById("kpi-buyer-available").innerText = `${availableCrops.length} Crops`;
 
       // Sent Enquiries (enquiries sent by this buyer)
-      const myEnquiries = this.enquiries.filter(e => e.buyerEmail === this.buyerProfile.email);
+      const myEnquiries = this.enquiries.filter(e => e.buyerId === userUid);
       const pendingSent = myEnquiries.filter(e => e.status === "Pending").length;
       document.getElementById("kpi-buyer-enquiries").innerText = `${pendingSent} Pending`;
 
@@ -394,16 +622,13 @@ class HarvestLinkApp {
           let statusBadge = "";
           if (e.status === "Pending") statusBadge = `<span class="badge badge-warning">Pending</span>`;
           else if (e.status === "Accepted") statusBadge = `<span class="badge badge-success">Accepted</span>`;
+          else if (e.status === "Counter Offered") statusBadge = `<span class="badge badge-accent">Counter Offered</span>`;
           else statusBadge = `<span class="badge badge-danger">Rejected</span>`;
-
-          // find seller name
-          const crop = this.listings.find(c => c.id === e.listingId);
-          const sellerName = crop ? crop.farmerName : "Unknown";
 
           const row = document.createElement("tr");
           row.innerHTML = `
             <td><strong>${e.cropName}</strong></td>
-            <td>${sellerName}</td>
+            <td>${e.farmerName}</td>
             <td>${e.quantityRequested.toLocaleString("en-IN")}</td>
             <td>Rs. ${e.priceOffered}</td>
             <td>${new Date(e.createdAt).toLocaleDateString()}</td>
@@ -418,24 +643,23 @@ class HarvestLinkApp {
       alertsFeed.innerHTML = "";
 
       const alertItems = [];
-      // Pull recent enquiries statuses
       myEnquiries.forEach(e => {
         if (e.status === "Accepted") {
           alertItems.push({ type: "success", text: `Your quote for ${e.cropName} was accepted by the seller!`, time: "Recent" });
         } else if (e.status === "Rejected") {
           alertItems.push({ type: "danger", text: `Your offer for ${e.cropName} was declined.`, time: "Recent" });
+        } else if (e.status === "Counter Offered") {
+          alertItems.push({ type: "accent", text: `Seller sent a counter bid of Rs. ${e.priceOffered} on ${e.cropName}.`, time: "Recent" });
         } else {
           alertItems.push({ type: "info", text: `Your bid for ${e.cropName} is currently pending review.`, time: "Active" });
         }
       });
 
-      // Add general notifications for newly listed crops by other farmers
-      const othersCrops = this.listings.filter(c => c.farmerName !== this.farmerProfile.name);
+      const othersCrops = this.listings.filter(c => c.farmerId !== userUid);
       othersCrops.slice(-2).forEach(c => {
         alertItems.push({ type: "accent", text: `New arrival: ${c.cropName} (${c.quantity} ${c.unit}) listed in ${c.location} by ${c.farmerName}.`, time: c.createdAt });
       });
 
-      // Ensure we have some items in the feed
       if (alertItems.length === 0) {
         alertItems.push({ type: "info", text: "No marketplace updates yet. Go to Marketplace to explore.", time: "Now" });
       }
@@ -543,7 +767,8 @@ class HarvestLinkApp {
     const grid = document.getElementById("my-listings-grid");
     grid.innerHTML = "";
 
-    const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
+    const farmerListings = this.listings.filter(c => c.farmerId === userUid);
     
     // Sort so most recent comes first
     const sorted = [...farmerListings].reverse();
@@ -556,6 +781,7 @@ class HarvestLinkApp {
           <p>You have not published any crops yet. Click the "Add Crop Listing" button to list your current inventory.</p>
         </div>
       `;
+      this.renderReceivedEnquiries();
       return;
     }
 
@@ -616,7 +842,8 @@ class HarvestLinkApp {
     const grid = document.getElementById("my-listings-grid");
     
     // Clear and filter
-    const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
+    const farmerListings = this.listings.filter(c => c.farmerId === userUid);
     
     const filtered = farmerListings.filter(c => {
       const matchQuery = c.cropName.toLowerCase().includes(query) || 
@@ -691,16 +918,15 @@ class HarvestLinkApp {
     const listContainer = document.getElementById("received-enquiries-list");
     listContainer.innerHTML = "";
 
-    const farmerListings = this.listings.filter(c => c.farmerName === this.farmerProfile.name);
-    const listingsIds = farmerListings.map(c => c.id);
-    
-    // Filter enquiries relating to farmer's crops
-    const relevant = this.enquiries.filter(e => listingsIds.includes(e.listingId));
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
+    const relevant = this.enquiries.filter(e => e.farmerId === userUid);
     
     // Counter badge
     const countBadge = document.getElementById("received-enquiries-count");
     const pendingCount = relevant.filter(e => e.status === "Pending").length;
-    countBadge.innerText = `${pendingCount} Pending`;
+    if (countBadge) {
+      countBadge.innerText = `${pendingCount} Pending`;
+    }
 
     if (relevant.length === 0) {
       listContainer.innerHTML = `
@@ -716,9 +942,9 @@ class HarvestLinkApp {
       let statusBadge = "";
       if (e.status === "Pending") statusBadge = `<span class="badge proposal-badge-pending">Pending</span>`;
       else if (e.status === "Accepted") statusBadge = `<span class="badge proposal-badge-accepted">Accepted</span>`;
+      else if (e.status === "Counter Offered") statusBadge = `<span class="badge proposal-badge-pending">Counter Offered</span>`;
       else statusBadge = `<span class="badge proposal-badge-rejected">Rejected</span>`;
 
-      // Get crop details
       const crop = this.listings.find(c => c.id === e.listingId) || { unit: "kg" };
 
       const enqCard = document.createElement("div");
@@ -787,12 +1013,13 @@ class HarvestLinkApp {
       const crop = this.listings.find(c => c.id === enq.listingId);
       if (crop) {
         crop.status = "Reserved";
-        alert(`Enquiry Accepted! Crop listing "${crop.cropName}" has been updated to "Reserved" status.`);
+        this.showToast(`Enquiry Accepted! Crop listing "${crop.cropName}" has been updated to "Reserved" status.`, "success");
       }
+    } else if (status === "Rejected") {
+      this.showToast(`Enquiry proposal for "${enq.cropName}" was rejected.`, "info");
     }
 
     this.saveToStorage();
-    this.renderMyListings();
   }
 
   makeCounterOffer(enqId) {
@@ -800,14 +1027,17 @@ class HarvestLinkApp {
     if (!enq) return;
     const counterRate = prompt(`Enter your counter offer price per unit (Current Buyer Offer: Rs. ${enq.priceOffered}):`, enq.priceOffered);
     if (counterRate !== null && !isNaN(counterRate) && Number(counterRate) > 0) {
-      alert(`Counter offer of Rs. ${counterRate}/unit sent to ${enq.buyerName} (${enq.buyerCompany})!`);
+      enq.status = "Counter Offered";
+      enq.priceOffered = Number(counterRate);
+      this.saveToStorage();
+      this.showToast(`Counter offer of Rs. ${counterRate}/unit sent to ${enq.buyerName}!`, "success");
     }
   }
 
   contactBuyer(enqId) {
     const enq = this.enquiries.find(e => e.id === enqId);
     if (!enq) return;
-    alert(`Contacting ${enq.buyerName} (${enq.buyerCompany}):\nPhone: ${enq.buyerPhone}\nEmail: ${enq.buyerEmail}`);
+    this.showToast(`Contact Details for ${enq.buyerName}:\nPhone: ${enq.buyerPhone} | Email: ${enq.buyerEmail}`, "info");
   }
 
   // --- MARKETPLACE SCREEN LOGIC ---
@@ -815,22 +1045,25 @@ class HarvestLinkApp {
     const grid = document.getElementById("marketplace-grid");
     grid.innerHTML = "";
 
-    // Show ALL listings
-    const sorted = [...this.listings].reverse();
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
+    
+    // Show only crop listings from other farmers
+    const sorted = this.listings
+      .filter(c => c.farmerId !== userUid)
+      .reverse();
 
     if (sorted.length === 0) {
       grid.innerHTML = `
         <div class="empty-state" style="grid-column: span 3;">
           <i class="fa-solid fa-store"></i>
           <h3>Marketplace Empty</h3>
-          <p>No crops are currently listed on HarvestLink. Switch to Farmer role to list a crop.</p>
+          <p>No crops are currently listed on HarvestLink by other farmers.</p>
         </div>
       `;
       return;
     }
 
     sorted.forEach(c => {
-      // Don't show sold items in active buyer marketplace
       if (c.status === "Sold") return;
 
       let statusBadge = "";
@@ -845,8 +1078,6 @@ class HarvestLinkApp {
       else if (c.category === "Vegetables") cropIcon = "fa-carrot";
       else if (c.category === "Fruits") cropIcon = "fa-apple-whole";
 
-      const isOwn = c.farmerName === this.farmerProfile.name;
-
       card.innerHTML = `
         <div class="crop-card-image">
           <i class="fa-solid ${cropIcon}"></i>
@@ -857,7 +1088,7 @@ class HarvestLinkApp {
           <div class="crop-card-meta">
             <span><i class="fa-solid fa-tags"></i> ${c.category}</span>
             <span>&bull;</span>
-            <span>Farmer: <strong>${isOwn ? 'Me (' + c.farmerName + ')' : c.farmerName}</strong></span>
+            <span>Farmer: <strong>${c.farmerName}</strong></span>
           </div>
           <p class="crop-card-desc">${c.description}</p>
           <div class="crop-card-details">
@@ -872,11 +1103,7 @@ class HarvestLinkApp {
           </div>
         </div>
         <div class="crop-card-footer">
-          ${isOwn ? `
-            <button class="btn btn-secondary btn-sm btn-block" disabled style="cursor: not-allowed;"><i class="fa-solid fa-user"></i> My Listing</button>
-          ` : `
-            <button class="btn btn-primary btn-sm btn-block" onclick="app.openEnquiryModal('${c.id}')"><i class="fa-solid fa-paper-plane"></i> Send Enquiry / Quote</button>
-          `}
+          <button class="btn btn-primary btn-sm btn-block" onclick="app.openEnquiryModal('${c.id}')"><i class="fa-solid fa-paper-plane"></i> Send Enquiry / Quote</button>
         </div>
       `;
       grid.appendChild(card);
@@ -888,9 +1115,12 @@ class HarvestLinkApp {
     const category = document.getElementById("market-category").value;
     const status = document.getElementById("market-status").value;
     const grid = document.getElementById("marketplace-grid");
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
 
     const filtered = this.listings.filter(c => {
       if (c.status === "Sold") return false;
+      if (c.farmerId === userUid) return false;
+      
       const matchQuery = c.cropName.toLowerCase().includes(query) || 
                           c.variety.toLowerCase().includes(query) || 
                           c.location.toLowerCase().includes(query) ||
@@ -924,8 +1154,6 @@ class HarvestLinkApp {
       else if (c.category === "Vegetables") cropIcon = "fa-carrot";
       else if (c.category === "Fruits") cropIcon = "fa-apple-whole";
 
-      const isOwn = c.farmerName === this.farmerProfile.name;
-
       card.innerHTML = `
         <div class="crop-card-image">
           <i class="fa-solid ${cropIcon}"></i>
@@ -936,7 +1164,7 @@ class HarvestLinkApp {
           <div class="crop-card-meta">
             <span><i class="fa-solid fa-tags"></i> ${c.category}</span>
             <span>&bull;</span>
-            <span>Farmer: <strong>${isOwn ? 'Me (' + c.farmerName + ')' : c.farmerName}</strong></span>
+            <span>Farmer: <strong>${c.farmerName}</strong></span>
           </div>
           <p class="crop-card-desc">${c.description}</p>
           <div class="crop-card-details">
@@ -951,11 +1179,7 @@ class HarvestLinkApp {
           </div>
         </div>
         <div class="crop-card-footer">
-          ${isOwn ? `
-            <button class="btn btn-secondary btn-sm btn-block" disabled><i class="fa-solid fa-user"></i> My Listing</button>
-          ` : `
-            <button class="btn btn-primary btn-sm btn-block" onclick="app.openEnquiryModal('${c.id}')"><i class="fa-solid fa-paper-plane"></i> Send Enquiry / Quote</button>
-          `}
+          <button class="btn btn-primary btn-sm btn-block" onclick="app.openEnquiryModal('${c.id}')"><i class="fa-solid fa-paper-plane"></i> Send Enquiry / Quote</button>
         </div>
       `;
       grid.appendChild(card);
@@ -1027,40 +1251,43 @@ class HarvestLinkApp {
     const description = document.getElementById("listing-description").value.trim();
 
     if (id) {
-      // Edit mode
       const index = this.listings.findIndex(c => c.id === id);
       if (index !== -1) {
         this.listings[index] = {
           ...this.listings[index],
           cropName, category, variety, quantity, unit, price, harvestDate, location, description
         };
+        this.showToast(`Listing "${cropName}" updated successfully.`, "success");
       }
     } else {
-      // Create mode
       const newCrop = {
         id: "list-" + Date.now(),
+        farmerId: this.currentUser ? this.currentUser.uid : "demo-user-123",
         farmerName: this.farmerProfile.name,
-        cropName, category, variety, quantity, unit, price, harvestDate, location, description,
+        farmerEmail: this.farmerProfile.email,
+        farmName: this.farmerProfile.farmName,
+        cropName, category, variety, quantity, unit, price, harvestDate, 
+        location: location || this.farmerProfile.location, 
+        description,
         status: "Available",
         createdAt: new Date().toISOString().split('T')[0]
       };
       this.listings.push(newCrop);
+      this.showToast(`Listing "${cropName}" created successfully!`, "success");
     }
 
     this.saveToStorage();
     this.closeAddListingModal();
-    this.renderMyListings();
   }
 
   deleteListing(id) {
     if (!confirm("Are you sure you want to delete this listing?")) return;
 
     this.listings = this.listings.filter(c => c.id !== id);
-    // clean relevant inquiries
     this.enquiries = this.enquiries.filter(e => e.listingId !== id);
 
     this.saveToStorage();
-    this.renderMyListings();
+    this.showToast("Listing deleted successfully.", "info");
   }
 
   // --- BUYER ENQUIRY FORM LOGIC ---
@@ -1125,8 +1352,20 @@ class HarvestLinkApp {
     const newEnquiry = {
       id: "enq-" + Date.now(),
       listingId,
+      farmerId: crop.farmerId || "demo-user-123",
+      farmerEmail: crop.farmerEmail || "ramesh.patel@greenvalley.com",
+      farmerName: crop.farmerName || "Ramesh Patel",
+      buyerId: this.currentUser ? this.currentUser.uid : "demo-user-123",
+      buyerEmail,
+      buyerName,
+      buyerCompany,
+      buyerPhone,
       cropName: crop.cropName,
-      buyerName, buyerCompany, buyerPhone, buyerEmail, quantityRequested, priceOffered, expectedDeliveryDate, preferredPayment, message,
+      quantityRequested,
+      priceOffered,
+      expectedDeliveryDate,
+      paymentMethod: preferredPayment,
+      message,
       status: "Pending",
       createdAt: new Date().toISOString()
     };
@@ -1134,8 +1373,7 @@ class HarvestLinkApp {
     this.enquiries.push(newEnquiry);
     this.saveToStorage();
     this.closeEnquiryModal();
-    alert("Enquiry sent! The farmer will review your quote on their dashboard.");
-    this.renderMarketplace();
+    this.showToast("Your business proposal has been submitted to the farmer!", "success");
   }
 
   // --- PROFILE SAVE LOGIC ---
@@ -1154,22 +1392,39 @@ class HarvestLinkApp {
     this.profile.mainCrops = document.getElementById("profile-crops").value.trim();
     
     this.saveToStorage();
-    this.updateUserDisplay();
-    alert("Profile saved successfully!");
+    this.showToast("Profile saved successfully!", "success");
   }
 
   // API KEYS LOGIC
-  saveApiKeyFromSettings() {
-    const key = document.getElementById("settings-api-key").value;
-    window.GeminiService.setApiKey(key);
-    this.syncApiStatus();
-    
-    // Sync header modals input
-    document.getElementById("modal-api-key").value = key;
-    
-    const successMsg = document.getElementById("api-key-success-msg");
-    successMsg.style.display = "block";
-    setTimeout(() => successMsg.style.display = "none", 4000);
+  async saveApiKeyFromSettings() {
+    const key = document.getElementById("settings-api-key").value.trim();
+    if (!key) {
+      this.clearApiKeyFromSettings();
+      return;
+    }
+
+    const saveBtn = document.querySelector(".api-key-container .btn-primary") || document.querySelector("button[onclick='app.saveApiKeyFromSettings()']");
+    const originalText = saveBtn ? saveBtn.innerHTML : "";
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Validating...`;
+    }
+
+    try {
+      await window.GeminiService.validateApiKey(key);
+      window.GeminiService.setApiKey(key);
+      this.syncApiStatus();
+      document.getElementById("modal-api-key").value = key;
+      this.showToast("Google Gemini Live Key activated!", "success");
+    } catch (err) {
+      console.error(err);
+      this.showToast(`Validation Failed: ${err.message}`, "error");
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText || "Save Key";
+      }
+    }
   }
 
   clearApiKeyFromSettings() {
@@ -1177,7 +1432,7 @@ class HarvestLinkApp {
     document.getElementById("modal-api-key").value = "";
     window.GeminiService.setApiKey("");
     this.syncApiStatus();
-    alert("API Key cleared. Switched back to simulated Demo Mode.");
+    this.showToast("API Key cleared. Switched back to simulated Demo Mode.", "info");
   }
 
   openApiKeyModal() {
@@ -1189,13 +1444,37 @@ class HarvestLinkApp {
     document.getElementById("api-modal").classList.remove("active");
   }
 
-  saveApiKeyFromModal() {
-    const key = document.getElementById("modal-api-key").value;
-    window.GeminiService.setApiKey(key);
-    this.syncApiStatus();
-    document.getElementById("settings-api-key").value = key;
-    this.closeApiKeyModal();
-    alert(key ? "Gemini Live API activated!" : "Switched to Demo Mode.");
+  async saveApiKeyFromModal() {
+    const key = document.getElementById("modal-api-key").value.trim();
+    if (!key) {
+      this.clearApiKeyFromSettings();
+      this.closeApiKeyModal();
+      return;
+    }
+
+    const saveBtn = document.querySelector("#api-modal .btn-primary");
+    const originalText = saveBtn ? saveBtn.innerHTML : "";
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Validating...`;
+    }
+
+    try {
+      await window.GeminiService.validateApiKey(key);
+      window.GeminiService.setApiKey(key);
+      this.syncApiStatus();
+      document.getElementById("settings-api-key").value = key;
+      this.closeApiKeyModal();
+      this.showToast("Google Gemini Live Key activated!", "success");
+    } catch (err) {
+      console.error(err);
+      this.showToast(`Validation Failed: ${err.message}`, "error");
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText || "Activate Key";
+      }
+    }
   }
 
   // ==============================================
@@ -1214,7 +1493,7 @@ class HarvestLinkApp {
     const harvestDate = document.getElementById("listing-harvest-date").value;
 
     if (!name || !quantity || !price || !location) {
-      alert("Please fill in Crop Name, Quantity, Price, and Location first so AI has crop parameters to describe!");
+      this.showToast("Please fill in Crop Name, Quantity, Price, and Location first so AI has crop parameters to describe!", "error");
       return;
     }
 
@@ -1223,7 +1502,7 @@ class HarvestLinkApp {
     const originalText = descButton.innerHTML;
 
     // Show loading spinner
-    descButton.innerHTML = `<span class="spinner"></span> Generating...`;
+    descButton.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Generating...`;
     descButton.disabled = true;
 
     try {
@@ -1231,8 +1510,9 @@ class HarvestLinkApp {
         name, category, variety, quantity, unit, price, location, harvestDate
       });
       descTextarea.value = generated;
+      this.showToast("Crop description generated by Gemini AI!", "success");
     } catch (err) {
-      alert("Error generating description: " + err.message);
+      this.showToast("Error generating description: " + err.message, "error");
     } finally {
       descButton.innerHTML = originalText;
       descButton.disabled = false;
@@ -1242,12 +1522,14 @@ class HarvestLinkApp {
   // 2. AI Advisor: Dynamic Selling / Buying Recommendations
   populateAdvisorSelect() {
     const select = document.getElementById("advisor-crop-select");
+    if (!select) return;
     select.innerHTML = "";
     
     const isFarmer = this.currentRole === "Farmer";
+    const userUid = this.currentUser ? this.currentUser.uid : "demo-user-123";
     const crops = isFarmer
-      ? this.listings.filter(c => c.farmerName === this.farmerProfile.name && c.status !== "Sold")
-      : this.listings.filter(c => c.farmerName !== this.farmerProfile.name && c.status !== "Sold");
+      ? this.listings.filter(c => c.farmerId === userUid && c.status !== "Sold")
+      : this.listings.filter(c => c.farmerId !== userUid && c.status !== "Sold");
 
     const btnFarmer = document.getElementById("advisor-generate-btn-farmer");
     const btnBuyer = document.getElementById("advisor-generate-btn-buyer");
@@ -1274,8 +1556,10 @@ class HarvestLinkApp {
   }
 
   resetAdvisorInsight() {
-    document.getElementById("advisor-insights-empty").style.display = "flex";
-    document.getElementById("advisor-insights-result").style.display = "none";
+    const emptyBox = document.getElementById("advisor-insights-empty");
+    const resultBox = document.getElementById("advisor-insights-result");
+    if (emptyBox) emptyBox.style.display = "flex";
+    if (resultBox) resultBox.style.display = "none";
   }
 
   async generateAdvisorRecommendation() {
@@ -1294,27 +1578,30 @@ class HarvestLinkApp {
     const originalText = btn.innerHTML;
     
     // Set loading
-    btn.innerHTML = `<span class="spinner"></span> Analyzing...`;
+    btn.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Analyzing...`;
     btn.disabled = true;
     
     const resultBox = document.getElementById("advisor-insights-result");
     const emptyBox = document.getElementById("advisor-insights-empty");
     
-    emptyBox.style.display = "none";
-    resultBox.style.display = "block";
-    resultBox.innerHTML = `
-      <div style="text-align:center; padding: 30px;">
-        <div class="spinner spinner-primary" style="width: 32px; height: 32px; margin-bottom:12px;"></div>
-        <p style="color:var(--color-text-medium);">${isFarmer ? 'AI is gathering local Mandi pricing index data & forecasting recommendations...' : 'AI is assessing seller pricing, quality factors, and transport logistics...'}</p>
-      </div>
-    `;
+    if (emptyBox) emptyBox.style.display = "none";
+    if (resultBox) {
+      resultBox.style.display = "block";
+      resultBox.innerHTML = `
+        <div style="text-align:center; padding: 30px;">
+          <i class="fa-solid fa-spinner spinner-icon" style="font-size: 2rem; color: var(--color-primary-medium); margin-bottom:12px;"></i>
+          <p style="color:var(--color-text-medium);">${isFarmer ? 'AI is gathering local Mandi pricing index data & forecasting recommendations...' : 'AI is assessing seller pricing, quality factors, and transport logistics...'}</p>
+        </div>
+      `;
+    }
 
     try {
       const markdown = await window.GeminiService.getSellingSuggestions(crop, !isFarmer);
-      // Basic markdown conversions
-      resultBox.innerHTML = this.parseBasicMarkdown(markdown);
+      if (resultBox) resultBox.innerHTML = this.parseBasicMarkdown(markdown);
+      this.showToast("Gemini recommendations generated successfully!", "success");
     } catch(err) {
-      resultBox.innerHTML = `<p style="color:var(--color-danger); padding:16px;">Failed to generate AI insights: ${err.message}</p>`;
+      if (resultBox) resultBox.innerHTML = `<p style="color:var(--color-danger); padding:16px;">Failed to generate AI insights: ${err.message}</p>`;
+      this.showToast(`AI Insight failed: ${err.message}`, "error");
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
@@ -1324,6 +1611,7 @@ class HarvestLinkApp {
   // 3. AI Chat Interface Q&A
   renderChatMessages() {
     const container = document.getElementById("chat-messages-container");
+    if (!container) return;
     container.innerHTML = "";
 
     this.chatHistory.forEach(msg => {
@@ -1333,7 +1621,6 @@ class HarvestLinkApp {
       container.appendChild(div);
     });
 
-    // Auto scroll
     container.scrollTop = container.scrollHeight;
   }
 
@@ -1346,30 +1633,34 @@ class HarvestLinkApp {
     this.chatHistory.push({ sender: "user", text });
     this.renderChatMessages();
     input.value = "";
+    this.saveToStorage();
 
     // Show loading indicators
     const container = document.getElementById("chat-messages-container");
     const loader = document.createElement("div");
     loader.className = "chat-message bot";
     loader.id = "chat-typing-loader";
-    loader.innerHTML = `<span class="spinner spinner-primary"></span> HarvestLink AI is typing...`;
-    container.appendChild(loader);
-    container.scrollTop = container.scrollHeight;
+    loader.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> HarvestLink AI is thinking...`;
+    if (container) {
+      container.appendChild(loader);
+      container.scrollTop = container.scrollHeight;
+    }
 
     try {
       const reply = await window.GeminiService.askFarmingQuestion(text, this.chatHistory.slice(0, -1));
       
-      // Remove loader & push bot reply
       const load = document.getElementById("chat-typing-loader");
       if (load) load.remove();
       
       this.chatHistory.push({ sender: "bot", text: reply });
+      this.saveToStorage();
       this.renderChatMessages();
     } catch(err) {
       const load = document.getElementById("chat-typing-loader");
       if (load) load.remove();
       
       this.chatHistory.push({ sender: "bot", text: `Error: Unable to reach Gemini. ${err.message}` });
+      this.saveToStorage();
       this.renderChatMessages();
     }
   }
@@ -1378,6 +1669,7 @@ class HarvestLinkApp {
     this.chatHistory = [
       { sender: "bot", text: "Chat history cleared. How can I help you today with your farm crops, pest controls, or mandi market rates?" }
     ];
+    this.saveToStorage();
     this.renderChatMessages();
   }
 
