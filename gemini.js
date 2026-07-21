@@ -22,7 +22,7 @@ class GeminiService {
 
   async validateApiKey(key) {
     if (!key) throw new Error("API Key is empty.");
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key.trim()}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key.trim()}`;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -63,7 +63,7 @@ class GeminiService {
       throw new Error("API Key is missing. Switch to Demo Mode or configure a key.");
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${this.apiKey}`;
     
     const response = await fetch(url, {
       method: "POST",

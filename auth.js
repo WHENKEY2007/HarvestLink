@@ -46,7 +46,7 @@ window.HarvestLinkAuth = {
     // 1. Check Internet Connection
     this.diagnostics.internetConnection = navigator.onLine;
     this.log(`Internet Connection: ${this.diagnostics.internetConnection ? "Connected" : "Disconnected"}`);
-    
+
     // Register network status listeners
     window.addEventListener("online", () => this.handleNetworkChange(true));
     window.addEventListener("offline", () => this.handleNetworkChange(false));
@@ -72,16 +72,16 @@ window.HarvestLinkAuth = {
     }
 
     // 4. Validate Firebase Config
-   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCQTbGXYqMBjoHEuo-mIgWV-rRyFTcW5G4",
-  authDomain: "harvestlink-ai-a5e0d.firebaseapp.com",
-  projectId: "harvestlink-ai-a5e0d",
-  storageBucket: "harvestlink-ai-a5e0d.firebasestorage.app",
-  messagingSenderId: "678383726867",
-  appId: "1:678383726867:web:42d880b7f7497a3925eae6",
-  measurementId: "G-W1W4LVV9K8"
-};
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQTbGXYqMBjoHEuo-mIgWV-rRyFTcW5G4",
+      authDomain: "harvestlink-ai-a5e0d.firebaseapp.com",
+      projectId: "harvestlink-ai-a5e0d",
+      storageBucket: "harvestlink-ai-a5e0d.firebasestorage.app",
+      messagingSenderId: "678383726867",
+      appId: "1:678383726867:web:42d880b7f7497a3925eae6",
+      measurementId: "G-W1W4LVV9K8"
+    };
 
     if (!this.isConfigComplete(firebaseConfig)) {
       this.log("Firebase configuration is incomplete.", true);
@@ -259,7 +259,7 @@ const firebaseConfig = {
   translateError(error) {
     if (!error) return "Authentication failed.";
     const code = error.code || "";
-    
+
     switch (code) {
       case "auth/unauthorized-domain":
         return "This domain is not authorized in Firebase Console.\nPlease add this domain under Authentication → Authorized Domains.";
