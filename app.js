@@ -1025,17 +1025,23 @@ class HarvestLinkApp {
   }
 
   openCounterModal(enqId) {
-    const enq = this.enquiries.find(e => e.id === enqId);
-    if (!enq) return;
+  const enq = this.enquiries.find(e => e.id === enqId);
+  if (!enq) return;
 
-    document.getElementById("counter-enquiry-id").value = enq.id;
-    document.getElementById("counter-enquiry-summary").innerText = `Buyer ${enq.buyerName} offered Rs. ${e.offeredPrice || e.priceOffered}/kg for ${e.cropName}.`;
-    document.getElementById("counter-price").value = (e.offeredPrice || e.priceOffered || 0) + 2;
-    document.getElementById("counter-message").value = "We can offer this rate for direct farm pickup.";
+  document.getElementById("counter-enquiry-id").value = enq.id;
 
-    const modal = document.getElementById("counter-modal");
-    if (modal) modal.classList.add("active");
-  }
+  document.getElementById("counter-enquiry-summary").innerText =
+    `Buyer ${enq.buyerName} offered Rs. ${enq.offeredPrice || enq.priceOffered}/kg for ${enq.cropName}.`;
+
+  document.getElementById("counter-price").value =
+    (enq.offeredPrice || enq.priceOffered || 0) + 2;
+
+  document.getElementById("counter-message").value =
+    "We can offer this rate for direct farm pickup.";
+
+  const modal = document.getElementById("counter-modal");
+  if (modal) modal.classList.add("active");
+}
 
   closeCounterModal() {
     const modal = document.getElementById("counter-modal");

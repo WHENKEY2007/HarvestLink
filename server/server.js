@@ -7,11 +7,11 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB Database
 connectDB();
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`===================================================`);
   console.log(`HarvestLink AI Backend REST API Server`);
   console.log(`Server running on port: ${PORT}`);
-  console.log(`Health Check: http://localhost:${PORT}/api/health`);
+ console.log(`Health Check: /api/health`);
   console.log(`===================================================`);
 });
 

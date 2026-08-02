@@ -6,8 +6,15 @@
 
 class ApiService {
   constructor() {
-    this.baseUrl = window.HARVESTLINK_API_BASE_URL || 'http://localhost:5000/api';
-  }
+  const isLocal =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  this.baseUrl = window.HARVESTLINK_API_BASE_URL ||
+    (isLocal
+      ? 'http://localhost:5000/api'
+      : 'RENDER_BACKEND_URL/api');
+}
 
   /**
    * Helper to retrieve current Firebase ID Token if user is logged in
@@ -63,11 +70,13 @@ class ApiService {
 
       return data;
     } catch (error) {
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        const netErr = new Error('Unable to connect to HarvestLink backend server. Please make sure the server is running on http://localhost:5000.');
-        netErr.status = 0;
-        throw netErr;
-      }
+     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+  const netErr = new Error(
+    `Unable to connect to HarvestLink backend server at ${this.baseUrl}.`
+  );
+  netErr.status = 0;
+  throw netErr;
+}
       throw error;
     }
   }
