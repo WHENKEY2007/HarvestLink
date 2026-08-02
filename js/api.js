@@ -13,7 +13,7 @@ class ApiService {
   this.baseUrl = window.HARVESTLINK_API_BASE_URL ||
     (isLocal
       ? 'http://localhost:5000/api'
-      : 'https://harvestlink-api.onrender.com');
+      : 'https://harvestlink-api.onrender.com/api');
 }
 
   /**
