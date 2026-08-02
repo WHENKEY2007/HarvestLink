@@ -2102,4 +2102,15 @@ body.dark-mode .login-warning-box {
   color: #e63946;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+
 
