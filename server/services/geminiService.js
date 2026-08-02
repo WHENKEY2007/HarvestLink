@@ -17,14 +17,14 @@ class GeminiBackendService {
 
     try {
       const genAI = new GoogleGenerativeAI(key);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       return response.text();
     } catch (sdkError) {
       console.warn('[Gemini SDK Warning, attempting REST API fallback]:', sdkError.message);
       // REST API fallback
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
