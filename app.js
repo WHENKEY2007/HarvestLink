@@ -133,7 +133,7 @@ class HarvestLinkApp {
   syncAllDisplays() {
     this.updateUserDisplay();
     this.renderDashboard();
-    
+
     if (this.currentTab === "listings") {
       this.renderMyListings();
     } else if (this.currentTab === "marketplace") {
@@ -363,7 +363,7 @@ class HarvestLinkApp {
 
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
-    
+
     let icon = "fa-circle-info";
     if (type === "success") icon = "fa-circle-check";
     else if (type === "error") icon = "fa-circle-xmark";
@@ -386,10 +386,10 @@ class HarvestLinkApp {
   initUI() {
     this.syncApiStatus();
     this.updateUserDisplay();
-    
+
     document.body.classList.remove("role-farmer", "role-buyer");
     document.body.classList.add(`role-${this.currentRole.toLowerCase()}`);
-    
+
     this.switchTab(this.currentTab);
     this.populateChartSelect();
 
@@ -408,13 +408,13 @@ class HarvestLinkApp {
   updateUserDisplay() {
     const usernameEl = document.getElementById("sidebar-username");
     if (usernameEl) usernameEl.innerText = this.profile.name || "HarvestLink User";
-    
+
     const roleEl = document.getElementById("sidebar-role");
     if (roleEl) roleEl.innerText = this.currentRole;
-    
+
     const avatarEl = document.getElementById("sidebar-avatar");
     if (avatarEl) avatarEl.innerText = this.getInitials(this.profile.name || "HarvestLink");
-    
+
     const sidebarCompany = document.getElementById("sidebar-company");
     if (sidebarCompany) {
       sidebarCompany.innerText = this.profile.farmName || this.profile.companyName || "";
@@ -422,10 +422,10 @@ class HarvestLinkApp {
 
     const profileNameDisplay = document.getElementById("profile-display-name");
     if (profileNameDisplay) profileNameDisplay.innerText = this.profile.name || "User";
-    
+
     const profileAvatarLarge = document.getElementById("profile-avatar-large");
     if (profileAvatarLarge) profileAvatarLarge.innerText = this.getInitials(this.profile.name || "User");
-    
+
     // Fill forms
     const pName = document.getElementById("profile-name");
     if (pName) pName.value = this.profile.name || "";
@@ -456,7 +456,7 @@ class HarvestLinkApp {
   syncApiStatus() {
     const pill = document.getElementById("api-status-pill");
     const text = document.getElementById("api-status-text");
-    
+
     if (pill && text) {
       pill.className = "api-status-pill live";
       text.innerText = "Express + Gemini Backend";
@@ -471,7 +471,7 @@ class HarvestLinkApp {
     document.querySelectorAll(".sidebar-nav li").forEach(li => {
       li.classList.remove("active");
     });
-    
+
     const navItem = document.getElementById(`nav-${tabId}`);
     if (navItem) navItem.classList.add("active");
 
@@ -489,8 +489,8 @@ class HarvestLinkApp {
 
     const title = document.getElementById("screen-title");
     const subtitle = document.getElementById("screen-subtitle");
-    
-    switch(tabId) {
+
+    switch (tabId) {
       case "dashboard":
         title.innerText = "Dashboard";
         if (this.currentRole === "Farmer") {
@@ -511,7 +511,7 @@ class HarvestLinkApp {
         this.renderMarketplace();
         break;
       case "ai-advisor":
-        title.innerText = "Gemini Agricultural Advisor";
+        title.innerText = "Agricultural Advisor";
         subtitle.innerText = "Generate smart crop pricing analysis and chat with our farming bot.";
         this.populateAdvisorSelect();
         this.renderChatMessages();
@@ -534,13 +534,13 @@ class HarvestLinkApp {
   async toggleRole(role) {
     this.currentRole = role;
     this.profile = role === "Farmer" ? this.farmerProfile : this.buyerProfile;
-    
+
     document.body.classList.remove("role-farmer", "role-buyer");
     document.body.classList.add(`role-${role.toLowerCase()}`);
 
     const farmerBtn = document.getElementById("role-btn-farmer");
     const buyerBtn = document.getElementById("role-btn-buyer");
-    
+
     if (role === "Farmer") {
       if (farmerBtn) farmerBtn.classList.add("active");
       if (buyerBtn) buyerBtn.classList.remove("active");
@@ -570,7 +570,7 @@ class HarvestLinkApp {
   toggleDarkMode() {
     const isDark = document.body.classList.toggle("dark-mode");
     localStorage.setItem("harvestlink_darkmode", isDark);
-    
+
     const icon = document.getElementById("theme-toggle-icon");
     if (icon) {
       if (isDark) {
@@ -618,10 +618,10 @@ class HarvestLinkApp {
         }
 
         // Render Recent Activity Feed
-        const alertsFeed = this.currentRole === "Farmer" 
+        const alertsFeed = this.currentRole === "Farmer"
           ? document.getElementById("dashboard-alerts")
           : document.getElementById("dashboard-buyer-alerts");
-        
+
         if (alertsFeed) {
           alertsFeed.innerHTML = "";
           const activity = dashRes.recentActivity || [];
@@ -775,7 +775,7 @@ class HarvestLinkApp {
             grid: { color: gridColor },
             ticks: {
               color: textColor,
-              callback: function(value) {
+              callback: function (value) {
                 return "Rs. " + value;
               }
             }
@@ -811,7 +811,7 @@ class HarvestLinkApp {
 
       const card = document.createElement("div");
       card.className = "crop-card";
-      
+
       let cropIcon = "fa-leaf";
       if (c.category === "Grains") cropIcon = "fa-wheat-awn";
       else if (c.category === "Vegetables") cropIcon = "fa-carrot";
@@ -860,9 +860,9 @@ class HarvestLinkApp {
     if (!grid) return;
 
     const filtered = this.myListings.filter(c => {
-      const matchQuery = c.cropName.toLowerCase().includes(query) || 
-                          (c.variety && c.variety.toLowerCase().includes(query)) || 
-                          c.location.toLowerCase().includes(query);
+      const matchQuery = c.cropName.toLowerCase().includes(query) ||
+        (c.variety && c.variety.toLowerCase().includes(query)) ||
+        c.location.toLowerCase().includes(query);
       const matchCategory = category === "all" || c.category === category;
       return matchQuery && matchCategory;
     });
@@ -955,7 +955,7 @@ class HarvestLinkApp {
       else if (e.status === "Countered") statusBadge = `<span class="badge proposal-badge-pending">Countered</span>`;
       else statusBadge = `<span class="badge proposal-badge-rejected">Rejected</span>`;
 
-      const counterInfo = e.counterOffer && e.counterOffer.offeredPrice 
+      const counterInfo = e.counterOffer && e.counterOffer.offeredPrice
         ? `<div style="margin-top:8px; padding:6px 10px; background:#fff3cd; color:#856404; border-radius:4px; font-size:0.8rem;">
             <strong>Counter Offer Sent:</strong> Rs. ${e.counterOffer.offeredPrice}/kg | "${e.counterOffer.message || 'Counter offer submitted'}"
            </div>`
@@ -1025,23 +1025,23 @@ class HarvestLinkApp {
   }
 
   openCounterModal(enqId) {
-  const enq = this.enquiries.find(e => e.id === enqId);
-  if (!enq) return;
+    const enq = this.enquiries.find(e => e.id === enqId);
+    if (!enq) return;
 
-  document.getElementById("counter-enquiry-id").value = enq.id;
+    document.getElementById("counter-enquiry-id").value = enq.id;
 
-  document.getElementById("counter-enquiry-summary").innerText =
-    `Buyer ${enq.buyerName} offered Rs. ${enq.offeredPrice || enq.priceOffered}/kg for ${enq.cropName}.`;
+    document.getElementById("counter-enquiry-summary").innerText =
+      `Buyer ${enq.buyerName} offered Rs. ${enq.offeredPrice || enq.priceOffered}/kg for ${enq.cropName}.`;
 
-  document.getElementById("counter-price").value =
-    (enq.offeredPrice || enq.priceOffered || 0) + 2;
+    document.getElementById("counter-price").value =
+      (enq.offeredPrice || enq.priceOffered || 0) + 2;
 
-  document.getElementById("counter-message").value =
-    "We can offer this rate for direct farm pickup.";
+    document.getElementById("counter-message").value =
+      "We can offer this rate for direct farm pickup.";
 
-  const modal = document.getElementById("counter-modal");
-  if (modal) modal.classList.add("active");
-}
+    const modal = document.getElementById("counter-modal");
+    if (modal) modal.classList.add("active");
+  }
 
   closeCounterModal() {
     const modal = document.getElementById("counter-modal");
@@ -1104,7 +1104,7 @@ class HarvestLinkApp {
 
       const card = document.createElement("div");
       card.className = "crop-card";
-      
+
       let cropIcon = "fa-leaf";
       if (c.category === "Grains") cropIcon = "fa-wheat-awn";
       else if (c.category === "Vegetables") cropIcon = "fa-carrot";
@@ -1225,7 +1225,7 @@ class HarvestLinkApp {
     document.getElementById("listing-id").value = "";
     document.getElementById("listing-harvest-date").value = new Date().toISOString().split('T')[0];
     document.getElementById("listing-location").value = this.farmerProfile.location || "Nashik, MH";
-    
+
     const modal = document.getElementById("add-listing-modal");
     if (modal) modal.classList.add("active");
   }
@@ -1371,7 +1371,7 @@ class HarvestLinkApp {
     document.getElementById("enquiry-listing-id").value = crop.id;
     document.getElementById("enquiry-crop-title").innerText = crop.cropName;
     document.getElementById("enquiry-crop-meta").innerText = `Seller: ${crop.farmerName} | Price: Rs. ${crop.price}/${crop.unit}`;
-    
+
     document.getElementById("enquiry-quantity").value = crop.quantity;
     document.getElementById("enquiry-price").value = crop.price;
     document.getElementById("enquiry-message").value = `We are interested in purchasing ${crop.cropName}. Please let us know pickup availability.`;
@@ -1524,7 +1524,7 @@ class HarvestLinkApp {
     const select = document.getElementById("advisor-crop-select");
     if (!select) return;
     select.innerHTML = "";
-    
+
     const isFarmer = this.currentRole === "Farmer";
     const crops = isFarmer ? this.myListings : this.listings;
 
@@ -1573,13 +1573,13 @@ class HarvestLinkApp {
 
     if (!btn) return;
     const originalText = btn.innerHTML;
-    
+
     btn.innerHTML = `<i class="fa-solid fa-spinner spinner-icon"></i> Analyzing...`;
     btn.disabled = true;
-    
+
     const resultBox = document.getElementById("advisor-insights-result");
     const emptyBox = document.getElementById("advisor-insights-empty");
-    
+
     if (emptyBox) emptyBox.style.display = "none";
     if (resultBox) {
       resultBox.style.display = "block";
@@ -1595,7 +1595,7 @@ class HarvestLinkApp {
       const markdown = await window.GeminiService.getSellingSuggestions(crop, !isFarmer);
       if (resultBox) resultBox.innerHTML = this.parseBasicMarkdown(markdown);
       this.showToast("Gemini market recommendation loaded!", "success");
-    } catch(err) {
+    } catch (err) {
       if (resultBox) resultBox.innerHTML = `<p style="color:var(--color-danger); padding:16px;">Failed to generate AI insights: ${err.message}</p>`;
       this.showToast(`AI Insight failed: ${err.message}`, "error");
     } finally {
@@ -1640,16 +1640,16 @@ class HarvestLinkApp {
 
     try {
       const reply = await window.GeminiService.askFarmingQuestion(text, this.chatHistory.slice(0, -1));
-      
+
       const load = document.getElementById("chat-typing-loader");
       if (load) load.remove();
-      
+
       this.chatHistory.push({ sender: "bot", text: reply });
       this.renderChatMessages();
-    } catch(err) {
+    } catch (err) {
       const load = document.getElementById("chat-typing-loader");
       if (load) load.remove();
-      
+
       this.chatHistory.push({ sender: "bot", text: `Error: Unable to reach Gemini backend. ${err.message}` });
       this.renderChatMessages();
     }
@@ -1665,7 +1665,7 @@ class HarvestLinkApp {
   parseBasicMarkdown(md) {
     if (!md) return "";
     let html = md;
-    
+
     html = html.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
     html = html.replace(/^## (.*$)/gim, '<h2>$2</h2>');

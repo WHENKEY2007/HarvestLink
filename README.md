@@ -1,93 +1,601 @@
 # 🌾 HarvestLink AI
 
-> **Smart Agricultural Platform Bridging the Gap Between Farmers & Buyers**
+**HarvestLink AI** is an AI-powered agricultural marketplace that connects farmers directly with buyers, enabling crop listings, enquiries, price negotiation, market insights, and intelligent farming assistance through a unified platform.
 
-🚜 **HarvestLink AI** is a premium digital connection hub that empowers farmers to manage crop listings, track incoming enquiries, analyze market trends, and leverage real-time AI-powered advisory features.
+## 🌐 Live Demo
 
----
+**Frontend:**  
+https://harvestlink-ai.vercel.app
 
-### 🛡️ Technologies & Specifications
+**Backend API:**  
+https://harvestlink-api.onrender.com
 
-![HTML5](https://img.shields.io/badge/Structure-HTML5-orange?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/Styling-Vanilla%20CSS-blue?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/Logic-Vanilla%20JS-yellow?style=for-the-badge&logo=javascript&logoColor=black)
-![Gemini AI](https://img.shields.io/badge/AI%20Engine-Gemini%203.5%20Flash-green?style=for-the-badge&logo=google-gemini&logoColor=white)
-![Responsive](https://img.shields.io/badge/Design-Mobile%20Friendly-purple?style=for-the-badge)
-![Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
+**API Health Check:**  
+https://harvestlink-api.onrender.com/api/health
 
 ---
 
-## ✨ Key Features
+## 🎥 Demo Video
 
-### 👨‍🌾 1. Profile & Multi-Role Switching
-Toggle seamlessly between **Farmer** and **Buyer** modes in a click. The interface adapts instantly, displaying custom dashboards, action options, and metrics relevant to each side of the agricultural supply chain.
+**YouTube Demo:**  
+Coming Soon — YouTube Unlisted Link
 
-### 📊 2. Interactive Analytics Dashboard
-* **Mandi price history graphics** powered by Chart.js. Includes interactive dropdown selection to check pricing indexes for different crops over a six-month window.
-* **Aggregated KPIs** highlighting listing counts, buyer enquiry levels, active inventory quantities, and total sales estimates.
-
-### 📝 3. Crop Inventory CRUD
-Farmers can easily add, edit, change status, and delete crop listings. Listings contain details including variety, unit pricing, harvest dates, and pickup locations.
-
-### 💬 4. Dynamic Buyer Enquiries
-* Buyers can apply real-time filtering (categories, location, pricing, availability status) to find and purchase crops.
-* Submit quotes specifying proposed purchase volume, target unit rate, and messages directly to the farmer's private dashboard to accept or reject.
-
-### 🧠 5. Gemini AI Advisor Hub
-> [!TIP]
-> HarvestLink AI contains direct API integrations (using browser client-side requests) to Google's Generative AI.
-* **AI Description Generator**: Autogenerates structured, professional listing copy directly within the crop registration modal.
-* **Smart Selling recommendations**: Click a button to get target pricing recommendations, regional demand assessments, and quality preservation tips based on your inventory parameters.
-* **Agricultural Q&A Chatbot**: A scrollable chat interface to ask farming advice on pests, crop damage, rain drainage preparation, or soil fertilizers.
+> The demo video will showcase authentication, farmer and buyer dashboards, crop listing management, enquiries, negotiations, and HarvestLink AI features.
 
 ---
 
-## 🛠️ Installation & Setup
+## 📸 Screenshots
 
-HarvestLink AI runs entirely client-side, making deployment extremely easy. **No complex backend compilation, node modules, or npm builds are required!**
+### Dashboard
 
-### Run Locally
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/WHENKEY2007/HarvestLink.git
-   ```
-2. Navigate into the folder:
-   ```bash
-   cd HarvestLink/HarvestLink
-   ```
-3. Open `index.html` directly in any web browser (Chrome, Edge, Safari, Firefox).
+![HarvestLink Dashboard](screenshots/dashboard.png)
 
----
+### Crop Marketplace
 
-## 🔑 AI Live Mode Configuration
+![Crop Marketplace](screenshots/marketplace.png)
 
-The application is built with a dual operational engine:
+### AI Farming Assistant
 
-> [!IMPORTANT]
-> **Demo Mode (Default)**: Runs realistic, simulated AI copy generators, market reports, and chatbot replies locally. No configuration needed!
->
-> **Live Mode**: Uses live requests to Google's **Gemini 3.5 Flash** models. To activate, navigate to **Profile & Settings** (or click the orange **Demo Mode** pill in the top header) and paste your **Google Gemini API Key**. The key is stored securely in your local browser storage.
+![HarvestLink AI Assistant](screenshots/ai-assistant.png)
+
+### Crop Listing / Management
+
+![Crop Management](screenshots/crop-management.png)
+
+> Add your screenshots inside a `screenshots/` folder in the repository root using the filenames shown above.
 
 ---
 
-## 📂 File Architecture
+## ✨ Features
+
+- 🔐 **Firebase Authentication**
+  - Google Sign-In
+  - Secure Firebase ID-token-based authentication
+  - Protected user functionality
+
+- 👨‍🌾 **Farmer Dashboard**
+  - View personalized dashboard statistics
+  - Manage crop listings
+  - Track buyer enquiries
+  - Respond to offers and negotiations
+
+- 🛒 **Buyer Dashboard**
+  - Browse available crop listings
+  - Search and filter crops
+  - Send purchase enquiries
+  - Track submitted enquiries
+
+- 🌾 **Crop Marketplace**
+  - Create crop listings
+  - View crop information
+  - Update existing listings
+  - Delete listings
+  - Store listing information persistently in MongoDB Atlas
+
+- 🤝 **Enquiry & Negotiation System**
+  - Buyers can contact farmers regarding listings
+  - Farmers can accept, reject, or counter offers
+  - Buyers can track enquiry status
+
+- 🤖 **HarvestLink AI**
+  - AI-powered farming chatbot
+  - Agricultural guidance
+  - Crop management suggestions
+  - Pest and disease guidance
+  - Post-harvest and storage advice
+
+- 📈 **AI Market Advisor**
+  - Crop selling recommendations
+  - Pricing assessment
+  - Market-oriented insights
+  - Buyer purchase recommendations
+
+- ✍️ **AI Crop Description Generator**
+  - Generates professional crop listing descriptions
+  - Uses crop, variety, quantity, price, location, and harvest information
+
+- 📱 **Responsive UI**
+  - Mobile-friendly interface
+  - Tablet support
+  - Laptop and desktop layouts
+  - Responsive cards, forms, dashboards, and modals
+
+- ⚡ **REST API Architecture**
+  - Dedicated Express backend
+  - Reusable frontend API service
+  - Centralized API communication
+  - Loading and error handling
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- HTML5
+- CSS3
+- JavaScript
+- Firebase Authentication
+- Responsive CSS
+
+### Backend
+
+- Node.js
+- Express.js
+- REST API
+- Firebase Admin SDK
+
+### Database
+
+- MongoDB
+- MongoDB Atlas
+- Mongoose
+
+### Artificial Intelligence
+
+- Google Gemini API
+- `@google/generative-ai`
+
+### Authentication
+
+- Firebase Authentication
+- Google Sign-In
+- Firebase ID Tokens
+- Firebase Admin SDK
+
+### Deployment
+
+- **Frontend:** Vercel
+- **Backend:** Render
+- **Database:** MongoDB Atlas
+- **Authentication:** Firebase
+- **Source Control:** GitHub
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1. Clone the Repository
 
 ```bash
-HarvestLink/
-│
-├── index.html     # App Shell, layout sections, modals, and templates
-├── styles.css     # Premium custom CSS, variable color themes, dark mode rules, responsive layouts
-├── app.js         # State controller, localStorage handlers, routing, and Chart.js animations
-├── gemini.js      # Gemini API integrations, request wrappers, and mock simulation algorithms
-└── mockData.js    # Pre-seeded database to ensure the dashboard displays data on initial run
+git clone https://github.com/WHENKEY2007/HarvestLink.git
+cd HarvestLink
 ```
+
+### 2. Install Backend Dependencies
+
+Navigate to the backend:
+
+```bash
+cd server
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create:
+
+```text
+server/.env
+```
+
+Add the following variables:
+
+```env
+MONGODB_URI=your_mongodb_atlas_connection_string
+
+GEMINI_API_KEY=your_gemini_api_key
+
+FIREBASE_PROJECT_ID=your_firebase_project_id
+
+FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
+
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+
+FRONTEND_URL=http://localhost:3000
+```
+
+> Never commit `.env` or private credentials to GitHub.
+
+### 4. Start the Backend
+
+Development mode:
+
+```bash
+npm run dev
+```
+
+Or production mode:
+
+```bash
+npm start
+```
+
+The local backend runs at:
+
+```text
+http://localhost:5000
+```
+
+Health check:
+
+```text
+http://localhost:5000/api/health
+```
+
+### 5. Start the Frontend
+
+Open another terminal from the repository root.
+
+Use a local development server on port `3000`.
+
+For example, using VS Code Live Server or another static HTTP server, serve the frontend at:
+
+```text
+http://localhost:3000
+```
+
+> Do not open `index.html` directly using `file://`. The application should be served through a local HTTP server.
+
+### 6. Configure Firebase Authentication
+
+Create/configure a Firebase project and enable:
+
+```text
+Authentication → Sign-in method → Google
+```
+
+For local development, ensure:
+
+```text
+localhost
+```
+
+is present under Firebase Authentication authorized domains.
+
+For production, add your deployed frontend domain.
+
+### 7. Verify the Application
+
+Check the backend:
+
+```text
+GET http://localhost:5000/api/health
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+Test:
+
+- Google Sign-In
+- Dashboard
+- Crop listings
+- Create/update/delete operations
+- Enquiries
+- AI chatbot
+- AI crop description
+- AI market recommendations
 
 ---
 
-## 🎨 Design Theme & Aesthetics
+## 📡 API Documentation
 
-HarvestLink AI was built using modern web design principles:
-* **Color Palette**: A curated agricultural system of Forest Green (`#1b4332`), Soft Sage (`#2d6a4f`), Leaf Green (`#52b788`), and Golden Amber (`#ff9f1c`).
-* **Glassmorphism**: Elegant card borders and background blur backdrops for modern overlay modals.
-* **Responsive Layouts**: Collapsible sidebar menu for tablets and mobile devices.
-* **Premium Dark Mode**: Seamless dark theme transition with specialized color filters on data charts, inputs, and badges.
+Production API base URL:
+
+```text
+https://harvestlink-api.onrender.com/api
+```
+
+Local API base URL:
+
+```text
+http://localhost:5000/api
+```
+
+### Health Check
+
+```http
+GET /api/health
+```
+
+Example response:
+
+```json
+{
+  "status": "OK",
+  "message": "HarvestLink AI REST API is running"
+}
+```
+
+### User
+
+```http
+GET /api/users/me
+```
+
+Returns information associated with the authenticated user.
+
+Authentication:
+
+```http
+Authorization: Bearer <firebase-id-token>
+```
+
+### Profile
+
+```http
+GET /api/profile
+```
+
+Get the authenticated user's profile.
+
+```http
+PUT /api/profile
+```
+
+Update profile information.
+
+Example request:
+
+```json
+{
+  "name": "Farmer Name",
+  "location": "Nashik, Maharashtra"
+}
+```
+
+### Listings
+
+Get crop listings:
+
+```http
+GET /api/listings
+```
+
+Get one listing:
+
+```http
+GET /api/listings/:id
+```
+
+Create listing:
+
+```http
+POST /api/listings
+```
+
+Example request:
+
+```json
+{
+  "cropName": "Tomato",
+  "variety": "Hybrid",
+  "quantity": 500,
+  "unit": "kg",
+  "price": 30,
+  "location": "Nashik"
+}
+```
+
+Update listing:
+
+```http
+PUT /api/listings/:id
+```
+
+Delete listing:
+
+```http
+DELETE /api/listings/:id
+```
+
+### Enquiries
+
+Get enquiries:
+
+```http
+GET /api/enquiries
+```
+
+Create an enquiry:
+
+```http
+POST /api/enquiries
+```
+
+Example:
+
+```json
+{
+  "listingId": "LISTING_ID",
+  "quantity": 100,
+  "priceOffered": 28,
+  "message": "Interested in purchasing this crop."
+}
+```
+
+Update enquiry status:
+
+```http
+PATCH /api/enquiries/:id/status
+```
+
+Counter an offer:
+
+```http
+PATCH /api/enquiries/:id/counter
+```
+
+### Dashboard
+
+```http
+GET /api/dashboard
+```
+
+Returns dashboard information scoped to the authenticated user.
+
+### Market Data
+
+```http
+GET /api/market
+```
+
+Returns agricultural market-related information used by the frontend.
+
+### AI Farming Chat
+
+```http
+POST /api/ai/chat
+```
+
+Example request:
+
+```json
+{
+  "question": "What are the best storage conditions for onions?",
+  "history": []
+}
+```
+
+Example response:
+
+```json
+{
+  "success": true,
+  "answer": "AI-generated agricultural guidance..."
+}
+```
+
+### AI Crop Description
+
+```http
+POST /api/ai/description
+```
+
+Generates an AI-assisted crop listing description.
+
+### AI Market Recommendation
+
+```http
+POST /api/ai/recommendation
+```
+
+Example request:
+
+```json
+{
+  "crop": {
+    "cropName": "Tomato",
+    "quantity": 500,
+    "unit": "kg",
+    "price": 30,
+    "location": "Nashik"
+  },
+  "isBuyer": false
+}
+```
+
+Returns an AI-generated market recommendation.
+
+> Protected API endpoints require a valid Firebase ID token in the `Authorization` header.
+
+---
+
+## 🏗️ Architecture / Folder Structure
+
+HarvestLink follows a separated frontend/backend architecture:
+
+```text
+HarvestLink/
+│
+├── index.html
+├── app.js
+├── auth.js
+├── gemini.js
+│
+├── js/
+│   └── api.js
+│
+├── css/
+│   └── ...
+│
+├── screenshots/
+│   ├── dashboard.png
+│   ├── marketplace.png
+│   ├── ai-assistant.png
+│   └── crop-management.png
+│
+├── server/
+│   ├── config/
+│   │   └── db.js
+│   │
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   │
+│   ├── app.js
+│   ├── server.js
+│   ├── seed.js
+│   ├── package.json
+│   └── .env.example
+│
+├── .gitignore
+└── README.md
+```
+
+### Application Flow
+
+```text
+Browser
+   │
+   ▼
+Vercel Frontend
+   │
+   │ HTTPS REST API
+   ▼
+Render / Express Backend
+   │
+   ├────────► Firebase Admin
+   │          Authentication
+   │
+   ├────────► MongoDB Atlas
+   │          Application Data
+   │
+   └────────► Google Gemini
+              AI Services
+```
+
+The frontend communicates with the backend through the reusable `ApiService`. Sensitive credentials such as MongoDB credentials, Firebase Admin credentials, and Gemini API keys remain exclusively on the backend.
+
+---
+
+## ⚠️ Known Limitations
+
+- **Render Free Tier Cold Starts:** The backend may spin down after a period of inactivity. The first API request after inactivity can therefore take additional time while the service wakes up.
+
+- **AI Availability:** HarvestLink AI depends on the availability, quota, and rate limits of the configured Gemini API.
+
+- **Market Recommendations:** AI-generated market recommendations should be treated as advisory information rather than guaranteed real-time commodity pricing.
+
+- **Network Dependency:** Authentication, AI features, marketplace operations, and database functionality require an active internet connection.
+
+- **Deployment Wake-Up Time:** When the Render backend is sleeping, the frontend may temporarily appear slower during the first request.
+
+- **Development Stage:** HarvestLink is currently an academic/full-stack project and may require additional security, monitoring, testing, analytics, and scalability improvements before large-scale commercial use.
+
+---
+
+## 🌾 HarvestLink AI
+
+**Connecting Farmers. Empowering Buyers. Enabling Smarter Agriculture.**
