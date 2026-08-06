@@ -15,15 +15,6 @@ https://harvestlink-api.onrender.com/api/health
 
 ---
 
-## 🎥 Demo Video
-
-**YouTube Demo:**  
-Coming Soon — YouTube Unlisted Link
-
-> The demo video will showcase authentication, farmer and buyer dashboards, crop listing management, enquiries, negotiations, and HarvestLink AI features.
-
----
-
 ## 📸 Screenshots
 
 ### Dashboard
